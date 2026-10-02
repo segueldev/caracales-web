@@ -374,38 +374,44 @@ git status
 git add .
 git commit -m "EVA 2 Backend - Academia Felina Floppa - Django REST Framework + PostgreSQL + JWT + Liquid Glass"
 
-git remote add origin https://github.com/TU_USUARIO/academia_felina.git
+git remote add origin git@github.com:segueldev/caracales-web.git
 git push -u origin main
 ```
 
-### 3. Si `git push` pide usuario y contraseña
+> **Repositorio del proyecto:** <https://github.com/segueldev/caracales-web>
+> Rama `main`, autenticación por **SSH**.
 
-GitHub **ya no acepta la contraseña de la cuenta**. Hay dos opciones:
+### 3. Autenticación (ya configurada en este proyecto)
 
-**Opción A — Token de acceso personal (HTTPS, la más simple)**
-
-1. Ir a <https://github.com/settings/tokens/new>
-2. Marcar el permiso **`repo`** (Full control of private repositories)
-3. Copiar el token generado (`ghp_...`)
-4. Al ejecutar `git push`:
-   - *Username:* tu usuario de GitHub
-   - *Password:* **el token** (no la contraseña de la cuenta)
-
-Para no escribirlo cada vez, guardar las credenciales del sistema:
+GitHub **no acepta la contraseña de la cuenta** para hacer `git push`. Este
+proyecto quedó configurado con **SSH**, que es la opción recomendada:
 
 ```bash
-git config --global credential.helper store
-git push -u origin main   # pide usuario y token una sola vez
-```
-
-**Opción B — SSH**
-
-```bash
+# Clave generada (una sola vez)
 ssh-keygen -t ed25519 -C "tu_email@ejemplo.com"
 cat ~/.ssh/id_ed25519.pub      # copiar el resultado
-# Pegarlo en https://github.com/settings/keys  →  "New SSH key"
-git remote set-url origin git@github.com:TU_USUARIO/academia_felina.git
-git push -u origin main
+
+# Registrarla en GitHub: https://github.com/settings/keys → "New SSH key"
+# Verificar (debe responder "Hi <usuario>!")
+ssh -T git@github.com
+```
+
+Comprobación hecha en este proyecto:
+
+```text
+Hi segueldev! You've successfully authenticated, but GitHub does not provide shell access.
+```
+
+**Alternativa — Token de acceso personal (HTTPS)**, si se necesita desde otra
+máquina:
+
+1. Ir a <https://github.com/settings/tokens/new>
+2. Marcar el permiso **`repo`**
+3. Copiar el token (`ghp_...`)
+4. Al hacer `git push`: *Username* = usuario de GitHub, *Password* = **el token**
+
+```bash
+git config --global credential.helper store   # lo recuerda la próxima vez
 ```
 
 ### 4. Verificar
