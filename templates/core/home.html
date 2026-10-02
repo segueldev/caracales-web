@@ -1,0 +1,795 @@
+{% extends 'base.html' %}
+{% load static estilos_extras %}
+
+{% block title %}{{ TEMATICA.nombre_sistema }} - {{ TEMATICA.eslogan }}{% endblock %}
+{% block body_class %}index-page{% endblock %}
+
+{# El home ocupa el ancho completo de la ventana (1280px) en vez del container de 64rem #}
+{% block main_container_class %}{% endblock %}
+{% block main_container_style %}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ==========================================================================
+   ACADEMIA FELINA FLOPPA - ESTILOS DE LA PÁGINA DE INICIO
+   --------------------------------------------------------------------------
+   Este proyecto NO usa Tailwind: usa Bootstrap 5 + estilos propios
+   (estilos.css). Aquí se definen las utilidades que Bootstrap no trae
+   (tipografía fluida, tonos, radios) para que el home quede consistente.
+
+   NOTA DE DISEÑO: el efecto Liquid Glass (backdrop-filter) se reserva
+   EXCLUSIVAMENTE para la barra de navegación (estilos.css). Las tarjetas
+   y bloques de este home usan paneles sólidos neutros, sin cristal.
+   ========================================================================== */
+
+/* ---------- 1. Contenedor y paleta de texto del home ---------- */
+/* La página de inicio tiene fondo oscuro (body.index-page), por eso el
+   texto por defecto aquí es claro para garantizar contraste AA. */
+.home-container {
+  max-width: 1280px;
+  color: #e7e5e4;
+}
+
+/* Escalas de texto fluidas */
+.t-hero { font-size: clamp(2.1rem, 5vw, 3.5rem); }
+.t-h2   { font-size: clamp(1.6rem, 3.4vw, 2.5rem); }
+.t-h3   { font-size: 1.15rem; }
+.lh-tight { line-height: 1.2; }
+.fw-medium { font-weight: 500; }
+
+/* Tonos de texto: neutros cálidos + ámbar de marca (sin azules) */
+.txt-200 { color: #e7e5e4; }
+.txt-300 { color: #d6d3d1; }
+.txt-400 { color: #a8a29e; }
+.txt-500 { color: #78716c; }
+.txt-amber-300 { color: #fcd34d; }
+.txt-amber-400 { color: #fbbf24; }
+.txt-green-500 { color: #4ade80; }
+.txt-sand      { color: #d9a96a; }
+.txt-xs { font-size: 0.75rem; }
+
+/* Anchos máximos de texto (evita líneas demasiado largas) */
+.mw-4xl { max-width: 56rem; }
+.mw-2xl { max-width: 42rem; }
+.mw-xs  { max-width: 20rem; }
+
+/* ---------- 2. Paneles sólidos, radios y bordes ---------- */
+/* Sin backdrop-filter: el cristal es solo de la navbar */
+.panel-card {
+  background: #121214;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 36px -24px rgba(0, 0, 0, 0.9);
+}
+.chip-panel {
+  background: rgba(12, 12, 14, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.rad-md { border-radius: 0.9rem; }
+.rad-lg { border-radius: 1.15rem; }
+.b-top-glass { border-top: 1px solid rgba(255, 255, 255, 0.10); }
+
+/* ---------- 3. Iconos SVG con tamaño fijo ---------- */
+.ico-12 { width: 12px; height: 12px; }
+.ico-16 { width: 16px; height: 16px; }
+.ico-20 { width: 20px; height: 20px; }
+.ico-24 { width: 24px; height: 24px; }
+
+/* Ranura de icono de imagen (se reemplaza sola si subes tu archivo) */
+.icon-slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.icon-slot img { width: 70%; height: 70%; object-fit: contain; }
+
+/* ---------- 4. Luces decorativas del hero ---------- */
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  pointer-events: none;
+}
+.blob-1 { top: 22%; left: 1rem;    width: 17rem; height: 17rem; }
+.blob-2 { bottom: 18%; right: 1rem; width: 23rem; height: 23rem; }
+.blob-3 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(600px, 90%); height: 600px; }
+.blob-amber     { background: rgba(245, 158, 11, 0.12); }
+.blob-amber-soft{ background: rgba(251, 191, 36, 0.06); }
+.blob-sand      { background: rgba(217, 169, 106, 0.10); }
+
+/* ---------- 5. Fondos de sección (neutros, sin azul) ---------- */
+/* Velo oscuro sobre la foto de fondo del hero para garantizar
+   contraste AA del texto claro sobre imagen (WCAG 1.4.3) */
+.home-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(10, 10, 11, 0.86) 0%,
+    rgba(10, 10, 11, 0.72) 45%,
+    rgba(10, 10, 11, 0.90) 100%
+  );
+  z-index: 0;
+}
+.bg-grad-down {
+  background: linear-gradient(180deg, rgba(10, 10, 11, 0.82) 0%, rgba(10, 10, 11, 0.94) 100%);
+}
+.bg-soft { background: rgba(10, 10, 11, 0.84); }
+/* Velo para las secciones que dejan ver la foto de fondo */
+.bg-veil { background: rgba(10, 10, 11, 0.86); }
+
+/* ---------- 6. Layout de secciones ---------- */
+.home-section { padding: 3.5rem 0; }
+.home-hero {
+  min-height: 52vh;
+  padding: 4.5rem 0;
+}
+@media (min-width: 768px) {
+  .home-section { padding: 5.5rem 0; }
+  .home-hero { min-height: 60vh; }
+}
+
+/* Logo decorativo del hero */
+.hero-logo {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 15rem;
+  height: 15rem;
+  opacity: 0.12;
+  pointer-events: none;
+}
+@media (min-width: 640px) {
+  .hero-logo { width: 20rem; height: 20rem; }
+}
+
+/* ---------- 7. Imágenes ---------- */
+.img-cover   { object-fit: cover;    width: 100%; height: 100%; }
+.img-contain { object-fit: contain;  width: 100%; height: 100%; }
+.card-media {
+  position: relative;
+  height: 11rem;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a1d 0%, #101012 100%);
+}
+.card-media .media-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.card-media .media-ph img { width: 5rem; height: 5rem; object-fit: contain; opacity: 0.9; }
+.card-media .media-ph span { font-size: 3.2rem; }
+.card-media > img { transition: transform 0.5s ease; }
+.card-media:hover > img { transform: scale(1.06); }
+
+/* Recorta el texto largo a 2 líneas */
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- 8. Estados interactivos ---------- */
+.hover-amber:hover { color: #fbbf24 !important; }
+.group-card { position: relative; }
+.group-card .group-overlay { opacity: 0; transition: opacity 0.3s ease; }
+.group-card:hover .group-overlay { opacity: 1; }
+
+/* Botón en estado "producto agregado" (respuesta AJAX del carro) */
+.btn-agregado {
+  background: #4ade80 !important;
+  color: #052e16 !important;
+  box-shadow: none !important;
+}
+
+/* Botón-imagen de la nariz de Floppa (restaurado del prototipo) */
+.btn-imagen-link { display: inline-block; }
+.btn-nariz {
+  display: block;
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), filter 0.25s ease;
+  box-shadow: 0 16px 34px -16px rgba(0, 0, 0, 0.9);
+}
+.btn-imagen-link:hover .btn-nariz { transform: scale(1.06); filter: brightness(1.08); }
+.btn-imagen-link:active .btn-nariz { transform: scale(0.97); }
+@media (min-width: 768px) { .btn-nariz { width: 175px; height: 175px; } }
+
+/* ---------- 9. Animaciones del home ---------- */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.stat-card {
+  animation: countUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+.stat-card:nth-child(1) { animation-delay: 0.10s; }
+.stat-card:nth-child(2) { animation-delay: 0.20s; }
+.stat-card:nth-child(3) { animation-delay: 0.30s; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+.pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* Reveal al hacer scroll (lo activa este template con jQuery) */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal.active { opacity: 1; transform: translateY(0); }
+
+/* ---------- 10. Tarjetas y botones ---------- */
+.course-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.course-card:hover { transform: translateY(-6px); box-shadow: 0 22px 44px -26px rgba(0, 0, 0, 0.95); }
+
+/* Texto con degradado de marca (ámbar → naranja) */
+.gradient-text {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 55%, #ef4444 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.btn-primary-floppa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border: none;
+  color: #1c1917;
+  font-weight: 600;
+  padding: 0.85rem 1.9rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.28);
+}
+.btn-primary-floppa:hover,
+.btn-primary-floppa:focus {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(251, 191, 36, 0.38);
+  color: #1c1917;
+}
+.btn-primary-floppa:active { transform: translateY(0) scale(0.98); }
+.btn-primary-floppa:disabled { opacity: 0.55; }
+
+.btn-outline-floppa {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: transparent;
+  border: 2px solid rgba(251, 191, 36, 0.50);
+  color: #fbbf24;
+  font-weight: 600;
+  padding: 0.78rem 1.6rem;
+  border-radius: 9999px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+.btn-outline-floppa:hover,
+.btn-outline-floppa:focus {
+  background: rgba(251, 191, 36, 0.12);
+  border-color: #fbbf24;
+  color: #fbbf24;
+}
+
+/* Insignia de categoría (ámbar, sin azul) */
+.category-badge {
+  display: inline-block;
+  background: rgba(251, 191, 36, 0.14);
+  border: 1px solid rgba(251, 191, 36, 0.32);
+  color: #fcd34d;
+  padding: 0.35rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+/* Insignia de disponibilidad de cupos */
+.availability-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(12, 12, 14, 0.88);
+  padding: 0.35rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.availability-badge.available   { color: #86efac; border: 1px solid rgba(34, 197, 94, 0.45); }
+.availability-badge.unavailable { color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.45); }
+
+/* Tarjetas de características (panel sólido, sin cristal) */
+.feature-card { padding: 1.5rem; height: 100%; transition: transform 0.25s ease; }
+.feature-card:hover { transform: translateY(-4px); }
+.feature-card .icon-slot {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 1.5rem;
+}
+
+/* Tintes neutros/cálidos para las ranuras de icono (sin azul/violeta) */
+.tone-amber { background: rgba(251, 191, 36, 0.13); }
+.tone-sand  { background: rgba(217, 169, 106, 0.13); }
+.tone-red   { background: rgba(239, 68, 68, 0.13); }
+.tone-green { background: rgba(74, 222, 128, 0.13); }
+
+/* ---------- 11. Tarjetas de estadísticas ---------- */
+/* Diseño sobrio: icono circular + número + etiqueta en versalitas */
+.stat-card {
+  position: relative;
+  height: 100%;
+  padding: 1.75rem 1.25rem;
+  text-align: center;
+}
+.stat-card .icon-slot {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1.1rem;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 1.7rem;
+}
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #fbbf24;
+  letter-spacing: -0.02em;
+}
+.stat-label {
+  margin: 0.65rem 0 0;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a8a29e;
+}
+.stat-desc {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #78716c;
+}
+
+/* Rejilla de cursos destacados */
+.course-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+@media (min-width: 640px)  { .course-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1024px) { .course-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* Bloque final de llamada a la acción */
+.cta-section {
+  /* Base sólida: la foto de fondo no debe atravesar el bloque */
+  background-color: rgba(12, 12, 14, 0.94);
+  background-image: linear-gradient(
+    135deg,
+    rgba(251, 191, 36, 0.16) 0%,
+    rgba(245, 158, 11, 0.10) 100%
+  );
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  border-radius: 1.6rem;
+  padding: 3rem 1.5rem;
+}
+@media (min-width: 768px) { .cta-section { padding: 3.5rem 3rem; } }
+
+/* Accesibilidad: respeta la preferencia del usuario de reducir movimiento */
+@media (prefers-reduced-motion: reduce) {
+  .stat-card, .pulse { animation: none; opacity: 1; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-container mx-auto px-3">
+
+  <!-- ===== HERO ===== -->
+  <section class="home-hero d-flex align-items-center justify-content-center position-relative overflow-hidden text-center text-md-start">
+    <!-- Luces decorativas de fondo -->
+    <div class="position-absolute top-0 start-0 w-100 h-100 pe-none" aria-hidden="true">
+      <span class="blob blob-amber blob-1 pulse"></span>
+      <span class="blob blob-sand blob-2 pulse" style="animation-delay: 1s;"></span>
+      <span class="blob blob-amber-soft blob-3"></span>
+    </div>
+
+    <div class="position-relative w-100">
+      <div class="mw-4xl mx-auto mx-md-0">
+        <!-- Insignia -->
+        <div class="d-inline-flex align-items-center gap-2 chip-panel px-3 py-2 rounded-pill mb-4 reveal">
+          <span class="d-inline-block bg-warning rounded-circle pulse" style="width: 8px; height: 8px;"></span>
+          <span class="small fw-medium txt-amber-300">Academia Oficial • Matrícula Abierta 2026</span>
+        </div>
+
+        <!-- Título principal -->
+        <h1 class="t-hero fw-bold lh-tight mb-4 reveal">
+          {{ TEMATICA.nombre_sistema }}
+          <br>
+          <span class="gradient-text">Entrenamiento de Élite</span>
+        </h1>
+
+        <!-- Bajada -->
+        <p class="txt-300 mb-4 reveal" style="font-size: 1.1rem;">
+          Domina el arte del sigilo, la caza y la comunicación felina.
+          Cursos diseñados por expertos caracales para la próxima generación de depredadores apex.
+        </p>
+
+        <!-- Botones de acción -->
+        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-sm-start justify-content-center reveal">
+          <a href="{% url 'catalogo' %}" class="btn-primary-floppa w-100 w-sm-auto">
+            <svg class="ico-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            Explorar Catálogo
+          </a>
+
+          {% if not user.is_authenticated %}
+          <a href="{% url 'registro' %}" class="btn-outline-floppa w-100 w-sm-auto">
+            <svg class="ico-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            </svg>
+            Unirse a la Manada
+          </a>
+          {% else %}
+          <a href="{% url 'mi_carro' %}" class="btn-outline-floppa w-100 w-sm-auto">
+            <svg class="ico-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+            </svg>
+            Mi Carro (<span id="hero-carro-count">{{ user.carro_matricula.total_items|default:0 }}</span>)
+          </a>
+          {% endif %}
+        </div>
+
+        <!-- Indicadores de confianza -->
+        <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-4 mt-4 txt-500 reveal">
+          <span class="d-inline-flex align-items-center gap-2 small">
+            <svg class="ico-16 txt-amber-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            Certificación Oficial Floppa
+          </span>
+          <span class="d-inline-flex align-items-center gap-2 small">
+            <svg class="ico-16 txt-sand" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            Acceso Vitalicio
+          </span>
+          <span class="d-inline-flex align-items-center gap-2 small">
+            <svg class="ico-16 txt-green-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            Comunidad Privada
+          </span>
+        </div>
+
+        <!-- Botón-imagen: nariz de Floppa (restaurado del prototipo) -->
+        <div class="mt-4 reveal">
+          <a href="{% if user.is_authenticated %}{% url 'catalogo' %}{% else %}{% url 'registro' %}{% endif %}"
+             class="btn-imagen-link" title="{% if user.is_authenticated %}Ver el catálogo{% else %}Unirse a la academia{% endif %}">
+            <img src="{% static 'assets/boton-nuevo-socio.png' %}?v=2" alt="Nariz de Floppa - únete a la academia" class="btn-nariz">
+          </a>
+        </div>
+      </div>
+
+      <!-- Logo decorativo -->
+      <div class="hero-logo d-none d-md-block" aria-hidden="true">
+        <img src="{% static 'assets/logo 2.png' %}" alt="" class="img-contain">
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== POR QUÉ ELEGIRNOS ===== -->
+  <section class="home-section bg-grad-down">
+    <div class="text-center mb-5 reveal">
+      <span class="category-badge mb-3">¿Por qué elegirnos?</span>
+      <h2 class="t-h2 fw-bold mb-3">
+        La academia <span class="gradient-text">más completa</span> para caracales
+      </h2>
+      <p class="txt-400 mw-2xl mx-auto mb-0">
+        Metodología probada, instructores legendarios y una comunidad que ruge junta.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      {% for feature in features %}
+      <div class="col-12 col-md-6 col-lg-3">
+        <div class="feature-card panel-card rad-md p-4 h-100 reveal" style="animation-delay: {{ forloop.counter0|add:'0.1' }}s;">
+          {# Icono: imagen subida por el usuario, si no existe usa el emoji #}
+          {% static_exists feature.icono_img as hay_icono %}
+          <div class="icon-slot {{ feature.icon_bg }}">
+            {% if hay_icono %}
+              <img src="{% static feature.icono_img %}" alt="">
+            {% else %}
+              <span>{{ feature.icon }}</span>
+            {% endif %}
+          </div>
+          <h3 class="t-h3 fw-bold mb-2">{{ feature.title }}</h3>
+          <p class="txt-400 mb-0">{{ feature.description }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ===== CURSOS DESTACADOS ===== -->
+  <section class="home-section bg-veil">
+    <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4 reveal">
+      <div>
+        <span class="category-badge mb-3">Destacados</span>
+        <h2 class="t-h2 fw-bold mb-0">
+          Cursos <span class="gradient-text">más populares</span>
+        </h2>
+      </div>
+      <a href="{% url 'catalogo' %}" class="btn-outline-floppa align-self-md-end text-nowrap">
+        Ver todo el catálogo
+        <svg class="ico-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+        </svg>
+      </a>
+    </div>
+
+    {% if cursos_destacados %}
+    <div class="course-grid" id="cursos-destacados">
+      {% for curso in cursos_destacados %}
+      <article class="course-card panel-card rad-lg overflow-hidden reveal" style="animation-delay: {{ forloop.counter0|add:'0.05' }}s;">
+        <!-- Imagen del curso -->
+        <div class="card-media">
+          {% if curso.imagen %}
+            <img src="{{ curso.imagen.url }}" alt="{{ curso.nombre }}" class="img-cover">
+          {% else %}
+            {# Portada: imagen del área si el usuario la subió, si no el emoji #}
+            {% static_exists curso.area.icono_img as hay_area %}
+            <div class="media-ph">
+              {% if hay_area %}
+                <img src="{% static curso.area.icono_img %}" alt="">
+              {% else %}
+                <span>{{ curso.area.icono }}</span>
+              {% endif %}
+            </div>
+          {% endif %}
+          <!-- Categoría -->
+          <span class="category-badge position-absolute top-0 start-0 ms-3 mt-3">{{ curso.area.nombre }}</span>
+          <!-- Disponibilidad -->
+          <span class="availability-badge position-absolute top-0 end-0 me-3 mt-3 {% if curso.esta_disponible %}available{% else %}unavailable{% endif %}">
+            {% if curso.esta_disponible %}
+              <svg class="ico-12" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+              {{ curso.cupos_disponibles }} cupos
+            {% else %}
+              <svg class="ico-12" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+              Agotado
+            {% endif %}
+          </span>
+        </div>
+
+        <!-- Contenido del curso -->
+        <div class="p-3 p-lg-4">
+          <h3 class="t-h3 fw-bold mb-2 hover-amber" style="transition: color .2s ease;">{{ curso.nombre }}</h3>
+          <p class="txt-400 small mb-3 clamp-2">{{ curso.resumen }}</p>
+
+          <!-- Metadatos -->
+          <div class="d-flex flex-wrap align-items-center gap-3 mb-3 small txt-500">
+            <span class="d-inline-flex align-items-center gap-1">
+              <svg class="ico-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              {{ curso.fecha_inicio|date:"d M Y" }}
+            </span>
+            <span class="d-inline-flex align-items-center gap-1">
+              <svg class="ico-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              {{ curso.get_modalidad_display }}
+            </span>
+          </div>
+
+          <!-- Precio y acción -->
+          <div class="d-flex align-items-center justify-content-between pt-3 b-top-glass">
+            <span class="fs-4 fw-bold gradient-text">CLP {{ curso.precio|floatformat:0 }}</span>
+            {% if user.is_authenticated and user.es_estudiante %}
+              <button class="btn-primary-floppa btn-agregar-carro px-3 py-2 small"
+                      data-curso-id="{{ curso.id }}"
+                      {% if not curso.esta_disponible %}disabled{% endif %}>
+                {% if curso.esta_disponible %}
+                  <svg class="ico-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                  Agregar
+                {% else %}
+                  <svg class="ico-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  Sin cupos
+                {% endif %}
+              </button>
+            {% else %}
+              <a href="{% url 'login' %}?next={% url 'catalogo' %}" class="btn-outline-floppa px-3 py-2 small">
+                Inicia sesión
+              </a>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <!-- Estado vacío -->
+    <div class="text-center py-5 panel-card rad-lg reveal">
+      <div style="font-size: 3.2rem;" class="mb-3">📚</div>
+      <h3 class="fw-bold mb-2">Próximamente nuevos cursos</h3>
+      <p class="txt-400 mb-4">Estamos preparando el mejor contenido para ti.</p>
+      <a href="{% url 'catalogo' %}" class="btn-outline-floppa">Ver catálogo completo</a>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- ===== ESTADÍSTICAS ===== -->
+  <section class="home-section bg-soft" id="estadisticas">
+    <div class="text-center mb-5 reveal">
+      <span class="category-badge mb-3">La academia en números</span>
+      <h2 class="t-h2 fw-bold mb-0">Cifras <span class="gradient-text">reales</span> de nuestra manada</h2>
+    </div>
+
+    <div class="row g-4">
+      {% for stat in stats_display %}
+      <div class="col-12 col-md-4">
+        {# Card rediseñada: panel sólido neutro, sin cristal ni azules #}
+        {% static_exists stat.icono_img as hay_icono %}
+        <div class="stat-card panel-card rad-lg reveal" style="animation-delay: {{ forloop.counter0|add:'0.1' }}s;">
+          <div class="icon-slot {{ stat.icon_bg }}">
+            {% if hay_icono %}
+              <img src="{% static stat.icono_img %}" alt="">
+            {% else %}
+              <span>{{ stat.icon }}</span>
+            {% endif %}
+          </div>
+          <div class="stat-number" data-target="{{ stat.value }}" data-count="0">0</div>
+          <p class="stat-label">{{ stat.label }}</p>
+          <p class="stat-desc mw-xs mx-auto">{{ stat.description }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- ===== LLAMADA A LA ACCIÓN ===== -->
+  <section class="home-section bg-veil">
+    <div class="cta-section text-center reveal">
+      <div class="mw-2xl mx-auto">
+        <span class="category-badge mb-3">¿Listo para comenzar?</span>
+        <h2 class="t-h2 fw-bold mb-3">
+          Únete a más de <span class="gradient-text">{{ stats.total_estudiantes|add:stats.total_estudiantes }}</span> estudiantes felinos
+        </h2>
+        <p class="txt-300 mb-4" style="font-size: 1.05rem;">
+          Tu viaje hacia la maestría felina comienza aquí. Matrícula abierta, cupos limitados.
+        </p>
+        <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center align-items-center">
+          <a href="{% if user.is_authenticated %}{% url 'catalogo' %}{% else %}{% url 'registro' %}{% endif %}" class="btn-primary-floppa w-100 w-sm-auto">
+            <svg class="ico-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+            </svg>
+            {% if user.is_authenticated %}Ver el catálogo{% else %}Crear mi cuenta gratis{% endif %}
+          </a>
+          <a href="{% url 'catalogo' %}" class="btn-outline-floppa w-100 w-sm-auto">
+            <svg class="ico-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            Ver cursos primero
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* ==========================================================================
+   INTERACCIONES DEL HOME
+   - Contador animado de estadísticas
+   - Reveal de secciones al hacer scroll
+   - Agregar curso al carro vía AJAX (carro persistente 1:1 con el User)
+   ========================================================================== */
+$(document).ready(function() {
+  // Contador animado: cuenta desde 0 hasta el valor real de la BD
+  function animateCounters() {
+    $('.stat-number').each(function() {
+      const $this = $(this);
+      const target = parseInt($this.data('target'), 10) || 0;
+      const duration = 2000;
+      const step = target / (duration / 16);
+      let current = 0;
+
+      const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+          $this.text(target.toLocaleString('es-CL'));
+          clearInterval(timer);
+        } else {
+          $this.text(Math.floor(current).toLocaleString('es-CL'));
+        }
+      }, 16);
+    });
+  }
+
+  // Revela los bloques cuando entran al viewport
+  function revealOnScroll() {
+    $('.reveal').each(function() {
+      const $this = $(this);
+      const elementTop = $this.offset().top;
+      const elementBottom = elementTop + $this.outerHeight();
+      const viewportTop = $(window).scrollTop();
+      const viewportBottom = viewportTop + $(window).height();
+
+      if (elementBottom > viewportTop + 100 && elementTop < viewportBottom - 100) {
+        $this.addClass('active');
+      }
+    });
+  }
+
+  // Dispara el contador cuando la sección de estadísticas es visible
+  let countersAnimated = false;
+  function checkStatsSection() {
+    if (countersAnimated) return;
+    const $statsSection = $('#estadisticas');
+    if (!$statsSection.length) return;
+    const elementTop = $statsSection.offset().top;
+    const viewportBottom = $(window).scrollTop() + $(window).height();
+    if (viewportBottom > elementTop + 200) {
+      animateCounters();
+      countersAnimated = true;
+    }
+  }
+
+  $(window).on('scroll', function() {
+    revealOnScroll();
+    checkStatsSection();
+  });
+
+  // Estado inicial
+  revealOnScroll();
+  checkStatsSection();
+
+  // Agregar al carro vía AJAX
+  $(document).on('click', '.btn-agregar-carro', function() {
+    const btn = $(this);
+    const cursoId = btn.data('curso-id');
+    const originalText = btn.html();
+
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Agregando...');
+
+    $.ajax({
+      url: '/api/carro/agregar/',
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
+        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+      },
+      contentType: 'application/json',
+      data: JSON.stringify({ curso_id: cursoId }),
+      success: function(response) {
+        playSuccessSound();
+        $('#carro-count, #hero-carro-count').text(response.carro.total_items);
+        btn.removeClass('btn-primary-floppa').addClass('btn-agregado').html('✓ Agregado');
+        setTimeout(() => {
+          btn.removeClass('btn-agregado').addClass('btn-primary-floppa').html(originalText).prop('disabled', false);
+        }, 2000);
+      },
+      error: function(xhr) {
+        let msg = 'Error al agregar';
+        if (xhr.responseJSON && xhr.responseJSON.detail) msg = xhr.responseJSON.detail;
+        if (xhr.responseJSON && xhr.responseJSON.cupos) msg = xhr.responseJSON.cupos[0];
+        alert(msg);
+        btn.html(originalText).prop('disabled', false);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

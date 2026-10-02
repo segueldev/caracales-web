@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrarse - {{ TEMATICA.nombre_sistema }}{% endblock %}
+{% block body_class %}form-page{% endblock %}
+
+{% block content %}
+<!-- Banner -->
+<div class="banner-floppa">
+  <div class="banner-content">
+    <img src="{% static 'assets/logo 2.png' %}" alt="Floppa" class="banner-logo">
+    <div class="banner-info">
+      <h1>Únete a la Manada</h1>
+      <p>Regístrate como estudiante y comienza tu entrenamiento felino. Tu carro de matrícula persistirá entre sesiones.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Formulario Registro -->
+<div class="card-container-form">
+  <form id="formRegistro" novalidate>
+    {% csrf_token %}
+    
+    <div class="form-grid">
+      <div>
+        <label for="username" class="form-label">Usuario *</label>
+        <input type="text" class="form-control" id="username" name="username" placeholder="nombre_usuario" required minlength="3" maxlength="150">
+        <div class="invalid-feedback" id="errorUsername"></div>
+      </div>
+      
+      <div>
+        <label for="email" class="form-label">Email *</label>
+        <input type="email" class="form-control" id="email" name="email" placeholder="correo@ejemplo.com" required>
+        <div class="invalid-feedback" id="errorEmail"></div>
+      </div>
+      
+      <div>
+        <label for="first_name" class="form-label">Nombre *</label>
+        <input type="text" class="form-control" id="first_name" name="first_name" placeholder="Nombre" required>
+        <div class="invalid-feedback" id="errorFirstName"></div>
+      </div>
+      
+      <div>
+        <label for="last_name" class="form-label">Apellido *</label>
+        <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Apellido" required>
+        <div class="invalid-feedback" id="errorLastName"></div>
+      </div>
+      
+      <div>
+        <label for="password" class="form-label">Contraseña *</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required minlength="8">
+        <div class="form-text">Mínimo 8 caracteres, mayúscula, minúscula y número</div>
+        <div class="invalid-feedback" id="errorPassword"></div>
+      </div>
+      
+      <div>
+        <label for="password_confirm" class="form-label">Confirmar contraseña *</label>
+        <input type="password" class="form-control" id="password_confirm" name="password_confirm" placeholder="••••••••" required>
+        <div class="invalid-feedback" id="errorPasswordConfirm"></div>
+      </div>
+      
+      <div class="form-grid-full">
+        <label for="telefono" class="form-label">
+          Teléfono <span class="form-text-optional">(opcional)</span>
+        </label>
+        <input type="tel" class="form-control" id="telefono" name="telefono" placeholder="+56 9 XXXX XXXX">
+        <div class="invalid-feedback" id="errorTelefono"></div>
+      </div>
+      
+      <div class="form-grid-full">
+        <label for="biografia" class="form-label">
+          Biografía <span class="form-text-optional">(opcional)</span>
+        </label>
+        <textarea class="form-control" id="biografia" name="biografia" rows="3" placeholder="Cuéntanos sobre ti..."></textarea>
+      </div>
+    </div>
+
+    <div class="form-actions-container">
+      <a href="{% url 'login' %}" class="btn-cancelar-floppa">Ya tengo cuenta</a>
+      <button type="submit" class="glass-brown px-4 py-2" style="border-radius: 9999px;">Registrarse</button>
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  $('#formRegistro').on('submit', function(e) {
+    e.preventDefault();
+    
+    // Validaciones cliente
+    let valido = true;
+    $('.is-invalid').removeClass('is-invalid');
+    $('.invalid-feedback').text('');
+    
+    const username = $('#username').val().trim();
+    const email = $('#email').val().trim();
+    const first_name = $('#first_name').val().trim();
+    const last_name = $('#last_name').val().trim();
+    const password = $('#password').val();
+    const password_confirm = $('#password_confirm').val();
+    
+    if (!username) { marcarError('username', 'El usuario es obligatorio.'); valido = false; }
+    if (!email) { marcarError('email', 'El email es obligatorio.'); valido = false; }
+    else if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(email)) { marcarError('email', 'Formato de email inválido.'); valido = false; }
+    if (!first_name) { marcarError('first_name', 'El nombre es obligatorio.'); valido = false; }
+    if (!last_name) { marcarError('last_name', 'El apellido es obligatorio.'); valido = false; }
+    if (!password) { marcarError('password', 'La contraseña es obligatoria.'); valido = false; }
+    else if (password.length < 8) { marcarError('password', 'Mínimo 8 caracteres.'); valido = false; }
+    if (password !== password_confirm) { marcarError('password_confirm', 'Las contraseñas no coinciden.'); valido = false; }
+    
+    if (!valido) return;
+    
+    const btn = $(this).find('button[type=submit]');
+    const originalText = btn.text();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Registrando...');
+    
+    $.ajax({
+      url: '/api/auth/registro/',
+      method: 'POST',
+      headers: { 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() },
+      contentType: 'application/json',
+      data: JSON.stringify({
+        username: username,
+        email: email,
+        first_name: first_name,
+        last_name: last_name,
+        password: password,
+        password_confirm: password_confirm,
+        telefono: $('#telefono').val().trim(),
+        biografia: $('#biografia').val().trim(),
+      }),
+      success: function(response) {
+        playSuccessSound();
+        // Guardar tokens
+        if (response.tokens) {
+          localStorage.setItem('access_token', response.tokens.access);
+          localStorage.setItem('refresh_token', response.tokens.refresh);
+        }
+        alert('¡Registro exitoso! Bienvenido a la Academia Felina Floppa.');
+        setTimeout(() => window.location.href = '/', 800);
+      },
+      error: function(xhr) {
+        let msg = 'Error en el registro';
+        if (xhr.responseJSON) {
+          const errors = xhr.responseJSON;
+          if (errors.username) { marcarError('username', errors.username[0]); }
+          if (errors.email) { marcarError('email', errors.email[0]); }
+          if (errors.password) { marcarError('password', errors.password[0]); }
+          if (errors.detail) msg = errors.detail;
+          else msg = Object.values(errors).flat().join(', ');
+        }
+        alert(msg);
+        btn.text(originalText).prop('disabled', false);
+      }
+    });
+  });
+  
+  function marcarError(campo, mensaje) {
+    $(`#${campo}`).addClass('is-invalid');
+    $(`#error${campo.charAt(0).toUpperCase() + campo.slice(1)}`).text(mensaje);
+  }
+});
+</script>
+{% endblock %}

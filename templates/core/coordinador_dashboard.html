@@ -1,0 +1,661 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel Coordinador - {{ TEMATICA.nombre_sistema }}{% endblock %}
+{% block body_class %}index-page{% endblock %}
+
+{% block content %}
+<!-- Banner -->
+<div class="banner-floppa mb-4">
+  <div class="banner-content">
+    <img src="{% static 'assets/logo 2.png' %}" alt="Coordinador" class="banner-logo">
+    <div class="banner-info">
+      <h1>Panel de Coordinador Académico</h1>
+      <p>Gestión completa de cursos, órdenes y matrículas. Cambia estados: PAGADO → ENTREGADO / CANCELADO.</p>
+    </div>
+  </div>
+</div>
+
+{% if user.es_coordinador %}
+  <!-- Tabs -->
+  <ul class="nav nav-tabs mb-4 glass-dark" id="coordinadorTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link glass-nav-item active" id="tab-cursos" data-bs-toggle="tab" data-bs-target="#panel-cursos" type="button" role="tab">
+        📚 Gestión de Cursos
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link glass-nav-item" id="tab-ordenes" data-bs-toggle="tab" data-bs-target="#panel-ordenes" type="button" role="tab">
+        📋 Gestión de Órdenes
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link glass-nav-item" id="tab-areas" data-bs-toggle="tab" data-bs-target="#panel-areas" type="button" role="tab">
+        🏷️ Áreas de Conocimiento
+      </button>
+    </li>
+  </ul>
+
+  <!-- Panel Cursos -->
+  <div class="tab-content" id="coordinadorTabsContent">
+    <div class="tab-pane fade show active" id="panel-cursos" role="tabpanel">
+      <div class="card-container mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Cursos</h3>
+            <button class="glass-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#modalCurso">
+              <svg width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+              Nuevo Curso
+            </button>
+          </div>
+          <div class="table-responsive-wrapper">
+            <table id="tablaCursosAdmin" class="table table-hover align-middle" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Nombre</th>
+                  <th>Área</th>
+                  <th>Modalidad</th>
+                  <th>Inicio</th>
+                  <th>Precio</th>
+                  <th>Cupos (Disp/Max)</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Cargado via DataTables -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Órdenes -->
+    <div class="tab-pane fade" id="panel-ordenes" role="tabpanel">
+      <div class="card-container">
+        <div class="card-body">
+          <h3 class="mb-3">Órdenes de Matrícula (Gestión Estados)</h3>
+          <div class="table-responsive-wrapper">
+            <table id="tablaOrdenesAdmin" class="table table-hover align-middle" style="width:100%">
+              <thead>
+                <tr>
+                  <th>N° Orden</th>
+                  <th>Estudiante</th>
+                  <th>Fecha</th>
+                  <th>Cursos</th>
+                  <th>Total</th>
+                  <th>Estado Actual</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Cargado via DataTables -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Panel Áreas -->
+    <div class="tab-pane fade" id="panel-areas" role="tabpanel">
+      <div class="card-container">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3 class="mb-0">Áreas de Conocimiento</h3>
+            <button class="glass-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#modalArea">
+              <svg width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
+              Nueva Área
+            </button>
+          </div>
+          <div class="table-responsive-wrapper">
+            <table id="tablaAreasAdmin" class="table table-hover align-middle" style="width:100%">
+              <thead>
+                <tr>
+                  <th>Icono</th>
+                  <th>Nombre</th>
+                  <th>Slug</th>
+                  <th>Descripción</th>
+                  <th>Orden</th>
+                  <th>Activa</th>
+                  <th>Cursos</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Cargado via DataTables -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Curso -->
+  <div class="modal fade" id="modalCurso" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content glass-dark">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="modalCursoTitle">Nuevo Curso</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="formCurso" class="modal-body">
+          <input type="hidden" name="id" id="curso_id">
+          <div class="row g-3">
+            <div class="col-12 col-md-6">
+              <label class="form-label">Nombre *</label>
+              <input type="text" class="form-control" name="nombre" id="curso_nombre" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Área *</label>
+              <select class="form-select" name="area" id="curso_area" required></select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Modalidad *</label>
+              <select class="form-select" name="modalidad" id="curso_modalidad" required>
+                <option value="PRESENCIAL">Presencial</option>
+                <option value="VIRTUAL">Virtual</option>
+                <option value="HIBRIDO">Híbrido</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Estado *</label>
+              <select class="form-select" name="estado" id="curso_estado" required>
+                <option value="BORRADOR">Borrador</option>
+                <option value="PUBLICADO">Publicado</option>
+                <option value="ARCHIVADO">Archivado</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label">Precio (CLP) *</label>
+              <input type="number" class="form-control" name="precio" id="curso_precio" min="0" step="100" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Cupos máximos *</label>
+              <input type="number" class="form-control" name="cupos_maximos" id="curso_cupos_maximos" min="1" max="500" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Fecha inicio *</label>
+              <input type="datetime-local" class="form-control" name="fecha_inicio" id="curso_fecha_inicio" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Fecha fin *</label>
+              <input type="datetime-local" class="form-control" name="fecha_fin" id="curso_fecha_fin" required>
+            </div>
+            <div class="col-12 col-md-6">
+              <label class="form-label">Fecha límite inscripción *</label>
+              <input type="datetime-local" class="form-control" name="fecha_limite_inscripcion" id="curso_fecha_limite" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Resumen (catálogo) *</label>
+              <textarea class="form-control" name="resumen" id="curso_resumen" rows="2" maxlength="300" required></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label">Descripción completa</label>
+              <textarea class="form-control" name="descripcion" id="curso_descripcion" rows="4"></textarea>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" name="activo" id="curso_activo" checked>
+                <label class="form-check-label" for="curso_activo">Activo</label>
+              </div>
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="form-check mt-3">
+                <input class="form-check-input" type="checkbox" name="destacado" id="curso_destacado">
+                <label class="form-check-label" for="curso_destacado">Destacado en home</label>
+              </div>
+            </div>
+          </div>
+        </form>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn-cancelar-floppa" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="glass-primary px-4 py-2" id="btnGuardarCurso">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+  <!-- Modal Área -->
+  <div class="modal fade" id="modalArea" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content glass-dark">
+        <div class="modal-header border-0">
+          <h5 class="modal-title" id="modalAreaTitle">Nueva Área</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <form id="formArea" class="modal-body">
+          <input type="hidden" name="id" id="area_id">
+          <div class="mb-3">
+            <label class="form-label">Icono/Emoji *</label>
+            <input type="text" class="form-control" name="icono" id="area_icono" maxlength="10" value="🐾" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nombre *</label>
+            <input type="text" class="form-control" name="nombre" id="area_nombre" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Slug *</label>
+            <input type="text" class="form-control" name="slug" id="area_slug" required>
+            <div class="form-text">URL amigable (auto-generado del nombre)</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Descripción</label>
+            <textarea class="form-control" name="descripcion" id="area_descripcion" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Orden</label>
+            <input type="number" class="form-control" name="orden" id="area_orden" min="0" value="0">
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="activa" id="area_activa" checked>
+            <label class="form-check-label" for="area_activa">Activa</label>
+          </div>
+        </form>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn-cancelar-floppa" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="glass-primary px-4 py-2" id="btnGuardarArea">Guardar</button>
+        </div>
+      </div>
+    </div>
+
+  <!-- Modal Cambiar Estado Orden -->
+  <div class="modal fade" id="modalCambiarEstado" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content glass-dark">
+        <div class="modal-header border-0">
+          <h5 class="modal-title">Cambiar Estado de Orden</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Orden: <strong id="estado_orden_numero"></strong></p>
+          <p>Estado actual: <strong id="estado_actual" class="badge bg-primary"></strong></p>
+          <hr>
+          <div class="mb-3">
+            <label class="form-label">Nuevo estado</label>
+            <select class="form-select" id="nuevo_estado"></select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Observaciones</label>
+            <textarea class="form-control" id="estado_observaciones" rows="2" placeholder="Motivo del cambio..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0">
+          <button type="button" class="btn-cancelar-floppa" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="glass-primary px-4 py-2" id="btnConfirmarEstado">Confirmar</button>
+        </div>
+      </div>
+    </div>
+{% else %}
+  <div class="card-container text-center">
+    <div class="card-body py-5">
+      <div class="display-1 mb-3">🔒</div>
+      <h3>Acceso solo para coordinadores</h3>
+      <p class="text-muted">Inicia sesión como coordinador académico para acceder al panel de gestión.</p>
+      <a href="{% url 'login' %}" class="glass-primary mt-3 d-inline-block">Iniciar Sesión</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  const token = localStorage.getItem('access_token');
+  const headers = { 'Authorization': 'Bearer ' + token };
+
+  // Cargar áreas para selects
+  function cargarAreasSelect() {
+    $.ajax({
+      url: '/api/catalogo/areas/',
+      method: 'GET',
+      headers: headers,
+      success: function(data) {
+        const areas = data.results || data;
+        const select = $('#curso_area');
+        select.empty().append('<option value="">Seleccionar área...</option>');
+        areas.forEach(a => select.append(`<option value="${a.id}">${a.icono} ${a.nombre}</option>`));
+      }
+    });
+  }
+
+  // DataTable Cursos Admin
+  const tablaCursos = $('#tablaCursosAdmin').DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: {
+      url: '/api/catalogo/cursos/',
+      type: 'GET',
+      headers: headers,
+      dataSrc: function(json) {
+        return json.results || json.data || json;
+      }
+    },
+    columns: [
+      { data: 'codigo' },
+      { data: 'nombre' },
+      { data: null, render: d => `${d.area_icono || '🐾'} ${d.area_nombre || ''}` },
+      { data: 'modalidad' },
+      { data: 'fecha_inicio', render: d => d ? new Date(d).toLocaleDateString('es-CL') : '-' },
+      { data: 'precio', render: d => `CLP ${parseFloat(d).toLocaleString('es-CL')}` },
+      { data: null, render: d => `<span class="badge ${d.cupos_disponibles > 0 ? 'bg-success' : 'bg-danger'}">${d.cupos_disponibles}/${d.cupos_maximos}</span>` },
+      { data: 'estado', render: d => `<span class="badge ${d==='PUBLICADO'?'bg-success':d==='BORRADOR'?'bg-warning text-dark':'bg-secondary'}">${d}</span>` },
+      { 
+        data: null, 
+        render: function(d) {
+          return `
+            <button class="btn btn-sm btn-outline-primary btn-editar-curso" data-id="${d.id}" title="Editar">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M11.5 3.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5h4zM11 2.5a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5h-2a.5.5 0 0 1-.5-.5v-2z"/></svg>
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar-curso" data-id="${d.id}" title="Eliminar (soft)">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/></svg>
+            </button>
+          `;
+        }
+      ],
+      language: { url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json" },
+      order: [[0, 'desc']]
+    });
+
+  // DataTable Órdenes Admin
+  const tablaOrdenes = $('#tablaOrdenesAdmin').DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: {
+      url: '/api/matriculas/gestion/',
+      type: 'GET',
+      headers: headers,
+      dataSrc: function(json) {
+        return json.results || json.data || json;
+      }
+    },
+    columns: [
+      { data: 'numero_orden', render: d => `<code>${d}</code>` },
+      { data: null, render: d => `${d.estudiante_nombre} (${d.estudiante_email})` },
+      { data: 'created_at', render: d => new Date(d).toLocaleDateString('es-CL') },
+      { data: 'matriculas', render: d => d ? d.length : 0 },
+      { data: 'total', render: d => `CLP ${parseFloat(d).toLocaleString('es-CL')}` },
+      { data: 'estado', render: d => `<span class="badge ${d==='PENDIENTE'?'bg-warning text-dark':d==='PAGADO'?'bg-success':d==='ENTREGADO'?'bg-info':'bg-danger'}">${d}</span>` },
+      { 
+        data: null, 
+        render: function(d) {
+          let btns = `<button class="btn btn-sm btn-outline-primary btn-ver-orden" data-id="${d.id}" title="Ver detalle"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M1.679 7.932a.5.5 0 0 1 .5-.5h12.644a.5.5 0 0 1 0 1H2.179a.5.5 0 0 1-.5-.5z"/></svg></button>`;
+          if (d.estado === 'PAGADO') {
+            btns += `<button class="btn btn-sm btn-outline-success btn-cambiar-estado" data-id="${d.id}" data-estado="${d.estado}" title="Cambiar a ENTREGADO/CANCELADO"><svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M16 8a8 8 0 1 1-16 0A8 8 0 0 1 16 8zM8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg></button>`;
+          }
+          return btns;
+        }
+      },
+      language: { url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json" },
+      order: [[2, 'desc']]
+    });
+
+  // DataTable Áreas Admin
+  const tablaAreas = $('#tablaAreasAdmin').DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: {
+      url: '/api/catalogo/areas/',
+      type: 'GET',
+      headers: headers,
+      dataSrc: function(json) {
+        return json.results || json.data || json;
+      }
+    },
+    columns: [
+      { data: 'icono', render: d => `<span style="font-size: 1.5rem;">${d}</span>` },
+      { data: 'nombre' },
+      { data: 'slug' },
+      { data: 'descripcion', render: d => d ? d.substring(0, 50) + '...' : '-' },
+      { data: 'orden' },
+      { data: 'activa', render: d => d ? '<span class="badge bg-success">Sí</span>' : '<span class="badge bg-danger">No</span>' },
+      { data: 'cursos_count' },
+      { 
+        data: null, 
+        render: function(d) {
+          return `
+            <button class="btn btn-sm btn-outline-primary btn-editar-area" data-id="${d.id}" title="Editar">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M11.5 3.5a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-4a.5.5 0 0 1-.5-.5v-4a.5.5 0 0 1 .5-.5h4z"/></svg>
+            </button>
+            <button class="btn btn-sm btn-outline-danger btn-eliminar-area" data-id="${d.id}" title="Eliminar (soft)">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5z"/></svg>
+            </button>
+          `;
+        }
+      },
+      language: { url: "https://cdn.datatables.net/plug-ins/1.13.8/i18n/es-ES.json" },
+      order: [[4, 'asc']]
+    });
+
+  // Modal Curso - Nuevo
+  $('#modalCurso').on('show.bs.modal', function(e) {
+    const btn = $(e.relatedTarget);
+    const isEdit = btn.hasClass('btn-editar-curso');
+    const modal = $(this);
+    
+    modal.find('#modalCursoTitle').text(isEdit ? 'Editar Curso' : 'Nuevo Curso');
+    $('#formCurso')[0].reset();
+    $('#curso_id').val('');
+    $('#curso_activo').prop('checked', true);
+    $('#curso_destacado').prop('checked', false);
+    
+    if (isEdit) {
+      const id = btn.data('id');
+      $.ajax({
+        url: `/api/catalogo/cursos/${id}/`,
+        method: 'GET',
+        headers: headers,
+        success: function(curso) {
+          $('#curso_id').val(curso.id);
+          $('#curso_nombre').val(curso.nombre);
+          $('#curso_area').val(curso.area);
+          $('#curso_modalidad').val(curso.modalidad);
+          $('#curso_estado').val(curso.estado);
+          $('#curso_precio').val(curso.precio);
+          $('#curso_cupos_maximos').val(curso.cupos_maximos);
+          $('#curso_fecha_inicio').val(curso.fecha_inicio?.slice(0,16));
+          $('#curso_fecha_fin').val(curso.fecha_fin?.slice(0,16));
+          $('#curso_fecha_limite').val(curso.fecha_limite_inscripcion?.slice(0,16));
+          $('#curso_resumen').val(curso.resumen);
+          $('#curso_descripcion').val(curso.descripcion);
+          $('#curso_activo').prop('checked', curso.activo);
+          $('#curso_destacado').prop('checked', curso.destacado);
+        }
+      });
+    }
+  });
+
+  // Guardar Curso
+  $('#btnGuardarCurso').on('click', function() {
+    const id = $('#curso_id').val();
+    const isEdit = !!id;
+    const url = isEdit ? `/api/catalogo/cursos/${id}/` : '/api/catalogo/cursos/';
+    const method = isEdit ? 'PATCH' : 'POST';
+    
+    const data = {
+      nombre: $('#curso_nombre').val(),
+      area: parseInt($('#curso_area').val()),
+      modalidad: $('#curso_modalidad').val(),
+      estado: $('#curso_estado').val(),
+      precio: parseFloat($('#curso_precio').val()),
+      cupos_maximos: parseInt($('#curso_cupos_maximos').val()),
+      fecha_inicio: $('#curso_fecha_inicio').val(),
+      fecha_fin: $('#curso_fecha_fin').val(),
+      fecha_limite_inscripcion: $('#curso_fecha_limite').val(),
+      resumen: $('#curso_resumen').val(),
+      descripcion: $('#curso_descripcion').val(),
+      activo: $('#curso_activo').is(':checked'),
+      destacado: $('#curso_destacado').is(':checked'),
+    };
+    
+    const btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Guardando...');
+    
+    $.ajax({
+      url: url,
+      method: method,
+      headers: { ...headers, 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() },
+      contentType: 'application/json',
+      data: JSON.stringify(data),
+      success: function() {
+        playSuccessSound();
+        $('#modalCurso').modal('hide');
+        tablaCursos.ajax.reload(null, false);
+      },
+      error: function(xhr) {
+        alert('Error: ' + (xhr.responseJSON?.detail || JSON.stringify(xhr.responseJSON)));
+      },
+      complete: function() {
+        btn.prop('disabled', false).html('Guardar');
+      }
+    });
+  });
+
+  // Modal Área - Nuevo/Editar
+  $('#modalArea').on('show.bs.modal', function(e) {
+    const btn = $(e.relatedTarget);
+    const isEdit = btn.hasClass('btn-editar-area');
+    const modal = $(this);
+    
+    modal.find('#modalAreaTitle').text(isEdit ? 'Editar Área' : 'Nueva Área');
+    $('#formArea')[0].reset();
+    $('#area_id').val('');
+    $('#area_activa').prop('checked', true);
+    $('#area_orden').val(0);
+    $('#area_icono').val('🐾');
+    
+    if (isEdit) {
+      const id = btn.data('id');
+      $.ajax({
+        url: `/api/catalogo/areas/${id}/`,
+        method: 'GET',
+        headers: headers,
+        success: function(area) {
+          $('#area_id').val(area.id);
+          $('#area_icono').val(area.icono);
+          $('#area_nombre').val(area.nombre);
+          $('#area_slug').val(area.slug);
+          $('#area_descripcion').val(area.descripcion);
+          $('#area_orden').val(area.orden);
+          $('#area_activa').prop('checked', area.activa);
+        }
+      });
+    }
+    
+    // Auto-generar slug
+    $('#area_nombre').on('input', function() {
+      if (!$('#area_slug').data('manual')) {
+        const slug = $(this).val().toLowerCase()
+          .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '');
+        $('#area_slug').val(slug);
+      }
+    });
+    $('#area_slug').on('input', function() {
+      $(this).data('manual', true);
+    });
+  });
+
+  // Guardar Área
+  $('#btnGuardarArea').on('click', function() {
+    const id = $('#area_id').val();
+    const isEdit = !!id;
+    const url = isEdit ? `/api/catalogo/areas/${id}/` : '/api/catalogo/areas/';
+    const method = isEdit ? 'PATCH' : 'POST';
+    
+    const data = {
+      icono: $('#area_icono').val(),
+      nombre: $('#area_nombre').val(),
+      slug: $('#area_slug').val(),
+      descripcion: $('#area_descripcion').val(),
+      orden: parseInt($('#area_orden').val()),
+      activa: $('#area_activa').is(':checked'),
+    };
+    
+    const btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>Guardando...');
+    
+    $.ajax({
+      url: url,
+      method: method,
+      headers: { ...headers, 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() },
+      contentType: 'application/json',
+      data: JSON.stringify(data),
+      success: function() {
+        playSuccessSound();
+        $('#modalArea').modal('hide');
+        tablaAreas.ajax.reload(null, false);
+        cargarAreasSelect();
+      },
+      error: function(xhr) {
+        alert('Error: ' + (xhr.responseJSON?.detail || JSON.stringify(xhr.responseJSON)));
+      },
+      complete: function() {
+        btn.prop('disabled', false).html('Guardar');
+      }
+    });
+  });
+
+  // Cambiar estado orden
+  $(document).on('click', '.btn-cambiar-estado', function() {
+    const id = $(this).data('id');
+    const estadoActual = $(this).data('estado');
+    
+    $('#estado_orden_numero').text('Cargando...');
+    $('#estado_actual').text(estadoActual).removeClass().addClass('badge ' + 
+      (estadoActual==='PAGADO'?'bg-success':'bg-secondary'));
+    $('#nuevo_estado').empty();
+    $('#estado_observaciones').val('');
+    
+    // Opciones según estado actual
+    const opciones = {
+      'PAGADO': [
+        { value: 'ENTREGADO', text: 'ENTREGADO / COMPLETADO' },
+        { value: 'CANCELADO', text: 'CANCELADO (libera cupos)' }
+      ]
+    };
+    
+    (opciones[estadoActual] || []).forEach(o => {
+      $('#nuevo_estado').append(`<option value="${o.value}">${o.text}</option>`);
+    });
+    
+    $('#estado_orden_numero').text('ID: ' + id);
+    $('#modalCambiarEstado').data('orden-id', id).modal('show');
+  });
+
+  $('#btnConfirmarEstado').on('click', function() {
+    const id = $('#modalCambiarEstado').data('orden-id');
+    const nuevoEstado = $('#nuevo_estado').val();
+    const observaciones = $('#estado_observaciones').val();
+    
+    const btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span>');
+    
+    $.ajax({
+      url: `/api/matriculas/gestion/${id}/estado/`,
+      method: 'PATCH',
+      headers: { ...headers, 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() },
+      contentType: 'application/json',
+      data: JSON.stringify({ estado: nuevoEstado, observaciones }),
+      success: function() {
+        playSuccessSound();
+        $('#modalCambiarEstado').modal('hide');
+        tablaOrdenes.ajax.reload(null, false);
+      },
+      error: function(xhr) {
+        alert('Error: ' + (xhr.responseJSON?.detail || JSON.stringify(xhr.responseJSON)));
+      },
+      complete: function() {
+        btn.prop('disabled', false).html('Confirmar');
+      }
+    });
+  });
+
+  // Inicializar
+  cargarAreasSelect();
+});
+</script>
+{% endblock %}

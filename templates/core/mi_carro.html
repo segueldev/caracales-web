@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Carro de Matrícula - {{ TEMATICA.nombre_sistema }}{% endblock %}
+{% block body_class %}index-page{% endblock %}
+
+{% block content %}
+<!-- Banner -->
+<div class="banner-floppa mb-4">
+  <div class="banner-content">
+    <img src="{% static 'assets/logo 3.png' %}" alt="Carro" class="banner-logo">
+    <div class="banner-info">
+      <h1>Mi Carro de Matrícula</h1>
+      <p>Cursos seleccionados. Persiste entre sesiones y dispositivos. <strong>Los cupos NO se descuentan hasta pagar.</strong></p>
+    </div>
+  </div>
+</div>
+
+{% if user.es_estudiante %}
+  <!-- Carro -->
+  <div class="card-container mb-4" id="carro-container">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">🛒 Cursos en tu carro</h3>
+        <span class="badge bg-primary" id="carro-total-items">0 items</span>
+      </div>
+      
+      <div class="table-responsive" id="carro-vacio" style="display: none;">
+        <div class="text-center py-5">
+          <div class="display-1 mb-3">🛒</div>
+          <h4>Tu carro está vacío</h4>
+          <p class="text-muted">Explora el <a href="{% url 'catalogo' %}" class="text-decoration-underline">catálogo</a> y agrega cursos.</p>
+          <a href="{% url 'catalogo' %}" class="glass-primary mt-3 d-inline-block">Ir al catálogo</a>
+        </div>
+      </div>
+
+      <div id="carro-con-items" style="display: none;">
+        <div class="table-responsive-wrapper">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Curso</th>
+                <th>Área</th>
+                <th>Modalidad</th>
+                <th>Inicio</th>
+                <th class="text-end">Precio</th>
+                <th class="text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="carro-items-body">
+              <!-- Cargado via JS -->
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Resumen y Checkout -->
+        <div class="row mt-4">
+          <div class="col-12 col-md-6">
+            <div class="glass-dark p-4 rounded">
+              <h5>Resumen</h5>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Subtotal</span>
+                <strong id="carro-subtotal">CLP 0</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span>Descuentos</span>
+                <strong class="text-success">CLP 0</strong>
+              </div>
+              <hr class="border-secondary">
+              <div class="d-flex justify-content-between fs-5">
+                <span>Total</span>
+                <strong id="carro-total" class="text-success">CLP 0</strong>
+              </div>
+              <small class="text-muted d-block mt-2">Los cupos se validan y descuentan al confirmar el pago.</small>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="glass-dark p-4 rounded h-100 d-flex flex-column justify-content-center">
+              <form id="checkout-form">
+                <div class="mb-3">
+                  <label class="form-label">Método de pago (simulado)</label>
+                  <select class="form-select" name="metodo_pago" id="metodo_pago">
+                    <option value="tarjeta">💳 Tarjeta de crédito/débito</option>
+                    <option value="transferencia">🏦 Transferencia bancaria</option>
+                    <option value="simulado" selected>🧪 Modo simulación (testing)</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label">Observaciones (opcional)</label>
+                  <textarea class="form-control" name="observaciones" rows="2" placeholder="Notas para la orden..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-success w-100 py-3 fw-bold fs-5" id="btn-checkout">
+                  <span class="spinner-border spinner-border-sm me-2 d-none" id="checkout-spinner"></span>
+                  Confirmar y Pagar
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="card-container text-center">
+    <div class="card-body py-5">
+      <div class="display-1 mb-3">🔒</div>
+      <h3>Acceso solo para estudiantes</h3>
+      <p class="text-muted">Inicia sesión como estudiante para acceder a tu carro de matrícula persistente.</p>
+      <a href="{% url 'login' %}" class="glass-primary mt-3 d-inline-block">Iniciar Sesión</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  const token = localStorage.getItem('access_token');
+  
+  function cargarCarro() {
+    if (!token) return;
+    
+    $.ajax({
+      url: '/api/carro/',
+      method: 'GET',
+      headers: { 'Authorization': 'Bearer ' + token },
+      success: function(data) {
+        renderCarro(data);
+      },
+      error: function() {
+        $('#carro-vacio').show();
+      }
+    });
+  }
+
+  function renderCarro(data) {
+    const items = data.items || [];
+    const totalItems = data.total_items || 0;
+    const totalPrecio = parseFloat(data.total_precio || 0);
+    
+    $('#carro-total-items').text(totalItems + (totalItems === 1 ? ' item' : ' items'));
+    
+    if (totalItems === 0) {
+      $('#carro-vacio').show();
+      $('#carro-con-items').hide();
+      return;
+    }
+    
+    $('#carro-vacio').hide();
+    $('#carro-con-items').show();
+    
+    // Renderizar items
+    const tbody = $('#carro-items-body');
+    tbody.empty();
+    
+    items.forEach(item => {
+      const curso = item.curso_detalle;
+      const row = `
+        <tr data-item-id="${item.id}" data-curso-id="${item.curso_id || curso.id}">
+          <td>
+            <strong>${item.nombre_congelado || curso.nombre}</strong>
+            <br><small class="text-muted">${item.codigo_congelado || curso.codigo}</small>
+          </td>
+          <td><span class="badge bg-secondary">${curso.area_icono || '🐾'} ${curso.area_nombre || ''}</span></td>
+          <td><span class="badge bg-info">${curso.modalidad || ''}</span></td>
+          <td>${curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString('es-CL') : '-'}</td>
+          <td class="text-end fw-bold">CLP ${parseFloat(item.precio_congelado || curso.precio).toLocaleString('es-CL')}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-danger btn-quitar-item" data-item-id="${item.id}" title="Quitar">
+              <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+            </button>
+          </td>
+        </tr>
+      `;
+      tbody.append(row);
+    });
+    
+    // Actualizar totales
+    $('#carro-subtotal').text('CLP ' + totalPrecio.toLocaleString('es-CL'));
+    $('#carro-total').text('CLP ' + totalPrecio.toLocaleString('es-CL'));
+  }
+
+  // Quitar item
+  $(document).on('click', '.btn-quitar-item', function() {
+    const btn = $(this);
+    const itemId = btn.data('item-id');
+    
+    if (!confirm('¿Quitar este curso del carro?')) return;
+    
+    $.ajax({
+      url: `/api/carro/quitar/${itemId}/`, // Necesitamos ajustar URL
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + token },
+      success: function() {
+        playSuccessSound();
+        cargarCarro();
+      },
+      error: function(xhr) {
+        alert('Error al quitar: ' + (xhr.responseJSON?.detail || 'Error desconocido'));
+      }
+    });
+  });
+
+  // Checkout
+  $('#checkout-form').on('submit', function(e) {
+    e.preventDefault();
+    
+    const btn = $('#btn-checkout');
+    const spinner = $('#checkout-spinner');
+    const formData = $(this).serialize();
+    
+    btn.prop('disabled', true);
+    spinner.removeClass('d-none');
+    btn.find('span:not(.spinner)').text('Procesando...');
+    
+    $.ajax({
+      url: '/api/carro/checkout/',
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token },
+      contentType: 'application/json',
+      data: JSON.stringify({
+        metodo_pago: $('#metodo_pago').val(),
+        observaciones: $('[name=observaciones]').val()
+      }),
+      success: function(orden) {
+        playSuccessSound();
+        alert(`¡Orden creada! Número: ${orden.numero_orden}\nEstado: ${orden.get_estado_display}\nTotal: CLP ${parseFloat(orden.total).toLocaleString('es-CL')}\n\nAhora puedes proceder al pago desde "Mis Matrículas".`);
+        window.location.href = '/mis-matriculas/';
+      },
+      error: function(xhr) {
+        let msg = 'Error en checkout';
+        if (xhr.responseJSON && xhr.responseJSON.detail) msg = xhr.responseJSON.detail;
+        if (xhr.responseJSON && xhr.responseJSON.cupos) msg = xhr.responseJSON.cupos[0];
+        alert(msg);
+      },
+      complete: function() {
+        btn.prop('disabled', false);
+        spinner.addClass('d-none');
+        btn.find('span:not(.spinner)').text('Confirmar y Pagar');
+      }
+    });
+  });
+
+  // Cargar al inicio
+  cargarCarro();
+});
+</script>
+{% endblock %}

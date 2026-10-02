@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - {{ TEMATICA.nombre_sistema }}{% endblock %}
+{% block body_class %}form-page{% endblock %}
+
+{% block content %}
+<!-- Banner -->
+<div class="banner-floppa">
+  <div class="banner-content">
+    <img src="{% static 'assets/logo 3.png' %}" alt="Perfil" class="banner-logo">
+    <div class="banner-info">
+      <h1>Mi Perfil</h1>
+      <p>Gestiona tu información personal y seguridad.</p>
+    </div>
+  </div>
+</div>
+
+{% if user.is_authenticated %}
+  <div class="row g-4">
+    <!-- Info Perfil -->
+    <div class="col-12 col-lg-5">
+      <div class="card-container-form text-center">
+        {% if user.avatar %}
+          <img src="{{ user.avatar.url }}" alt="{{ user.get_full_name }}" class="rounded-circle mb-3 border border-3 border-primary" style="width: 120px; height: 120px; object-fit: cover;">
+        {% else %}
+          <div class="d-inline-flex align-items-center justify-content-center mb-3 bg-primary rounded-circle" style="width: 120px; height: 120px;">
+            <span style="font-size: 4rem;">🐱</span>
+          </div>
+        {% endif %}
+        <h3>{{ user.get_full_name|default:user.username }}</h3>
+        <span class="badge bg-primary fs-6 px-3 py-2">{{ user.get_rol_display }}</span>
+        <p class="text-muted mt-2">@{{ user.username }}</p>
+        <p class="text-muted small">{{ user.email }}</p>
+        {% if user.biografia %}
+          <hr>
+          <p class="text-start small">{{ user.biografia }}</p>
+        {% endif %}
+      </div>
+    </div>
+    
+    <!-- Formularios -->
+    <div class="col-12 col-lg-7">
+      <!-- Datos Personales -->
+      <div class="card-container-form mb-4">
+        <h4 class="mb-3">📋 Datos Personales</h4>
+        <form id="formPerfil" novalidate>
+          {% csrf_token %}
+          <div class="form-grid">
+            <div>
+              <label for="pf_first_name" class="form-label">Nombre *</label>
+              <input type="text" class="form-control" id="pf_first_name" name="first_name" value="{{ user.first_name }}" required>
+            </div>
+            <div>
+              <label for="pf_last_name" class="form-label">Apellido *</label>
+              <input type="text" class="form-control" id="pf_last_name" name="last_name" value="{{ user.last_name }}" required>
+            </div>
+            <div>
+              <label for="pf_email" class="form-label">Email *</label>
+              <input type="email" class="form-control" id="pf_email" name="email" value="{{ user.email }}" required>
+            </div>
+            <div>
+              <label for="pf_telefono" class="form-label">Teléfono</label>
+              <input type="tel" class="form-control" id="pf_telefono" name="telefono" value="{{ user.telefono|default:'' }}" placeholder="+56 9 XXXX XXXX">
+            </div>
+            <div class="form-grid-full">
+              <label for="pf_biografia" class="form-label">Biografía</label>
+              <textarea class="form-control" id="pf_biografia" name="biografia" rows="3">{{ user.biografia|default:'' }}</textarea>
+            </div>
+          </div>
+          <div class="form-actions-container">
+            <button type="submit" class="glass-brown px-4 py-2" style="border-radius: 9999px;">Guardar cambios</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Cambio Contraseña -->
+      <div class="card-container-form mb-4">
+        <h4 class="mb-3">🔐 Cambiar Contraseña</h4>
+        <form id="formPassword" novalidate>
+          {% csrf_token %}
+          <div class="form-grid">
+            <div class="form-grid-full">
+              <label for="pwd_actual" class="form-label">Contraseña actual *</label>
+              <input type="password" class="form-control" id="pwd_actual" name="password_actual" required>
+            </div>
+            <div class="form-grid-full">
+              <label for="pwd_nueva" class="form-label">Nueva contraseña *</label>
+              <input type="password" class="form-control" id="pwd_nueva" name="password_nuevo" required minlength="8">
+              <div class="form-text">Mínimo 8 caracteres, mayúscula, minúscula y número</div>
+            </div>
+            <div class="form-grid-full">
+              <label for="pwd_confirm" class="form-label">Confirmar nueva *</label>
+              <input type="password" class="form-control" id="pwd_confirm" name="password_confirm" required>
+            </div>
+          </div>
+          <div class="form-actions-container">
+            <button type="submit" class="glass-brown px-4 py-2" style="border-radius: 9999px;">Actualizar contraseña</button>
+          </div>
+        </form>
+      </div>
+      
+      <!-- Sesiones / Logout -->
+      <div class="card-container-form">
+        <h4 class="mb-3">🚪 Sesión</h4>
+        <p class="text-muted small mb-3">Cierra sesión en todos los dispositivos. Tu carro de matrícula persistirá para la próxima vez.</p>
+        <button type="button" class="btn btn-outline-danger" id="btnLogoutAll">
+          <svg width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 16 16"><path d="M5.5 1.5A1.5 1.5 0 0 0 4 3v1h-.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5H4v1a1.5 1.5 0 0 0 1.5 1.5h10A1.5 1.5 0 0 0 16 13.5v-1h.5a.5.5 0 0 0 .5-.5v-10a.5.5 0 0 0-.5-.5H12v-1a1.5 1.5 0 0 0-1.5-1.5h-10zM4 3h12v1H4V3zm0 1.5v9h12v-9H4z"/><path fill-rule="evenodd" d="M15.5 8.5a.5.5 0 0 1 0 1H9.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L9.707 7.5H15.5z"/></svg>
+          Cerrar sesión en todos lados
+        </button>
+      </div>
+    </div>
+  </div>
+{% else %}
+  <div class="card-container text-center">
+    <div class="card-body py-5">
+      <div class="display-1 mb-3">🔒</div>
+      <h3>Inicia sesión para ver tu perfil</h3>
+      <a href="{% url 'login' %}" class="glass-primary mt-3 d-inline-block">Iniciar Sesión</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+  const token = localStorage.getItem('access_token');
+  const headers = { 'Authorization': 'Bearer ' + token };
+  
+  // Guardar perfil
+  $('#formPerfil').on('submit', function(e) {
+    e.preventDefault();
+    
+    const btn = $(this).find('button[type=submit]');
+    const originalText = btn.text();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Guardando...');
+    
+    $.ajax({
+      url: '/api/auth/perfil/',
+      method: 'PATCH',
+      headers: { ...headers, 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() },
+      contentType: 'application/json',
+      data: JSON.stringify({
+        first_name: $('#pf_first_name').val(),
+        last_name: $('#pf_last_name').val(),
+        email: $('#pf_email').val(),
+        telefono: $('#pf_telefono').val(),
+        biografia: $('#pf_biografia').val(),
+      }),
+      success: function(response) {
+        playSuccessSound();
+        btn.removeClass('btn-primary').addClass('btn-success').text('✓ Guardado');
+        setTimeout(() => {
+          btn.removeClass('btn-success').addClass('btn-primary').text(originalText).prop('disabled', false);
+          // Actualizar nombre en navbar si cambió
+          location.reload();
+        }, 1500);
+      },
+      error: function(xhr) {
+        alert('Error: ' + (xhr.responseJSON?.detail || JSON.stringify(xhr.responseJSON)));
+        btn.text(originalText).prop('disabled', false);
+      }
+    });
+  });
+  
+  // Cambio contraseña
+  $('#formPassword').on('submit', function(e) {
+    e.preventDefault();
+    
+    const pwd_actual = $('#pwd_actual').val();
+    const pwd_nueva = $('#pwd_nueva').val();
+    const pwd_confirm = $('#pwd_confirm').val();
+    
+    if (!pwd_actual || !pwd_nueva || !pwd_confirm) {
+      alert('Completa todos los campos');
+      return;
+    }
+    if (pwd_nueva !== pwd_confirm) {
+      alert('Las contraseñas nuevas no coinciden');
+      return;
+    }
+    if (pwd_nueva.length < 8) {
+      alert('Mínimo 8 caracteres');
+      return;
+    }
+    
+    const btn = $(this).find('button[type=submit]');
+    const originalText = btn.text();
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Actualizando...');
+    
+    $.ajax({
+      url: '/api/auth/cambio-password/',
+      method: 'POST',
+      headers: { ...headers, 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() },
+      contentType: 'application/json',
+      data: JSON.stringify({
+        password_actual: pwd_actual,
+        password_nuevo: pwd_nueva,
+        password_confirm: pwd_confirm,
+      }),
+      success: function() {
+        playSuccessSound();
+        alert('Contraseña actualizada correctamente. Deberás iniciar sesión de nuevo.');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        setTimeout(() => window.location.href = '/login/', 1000);
+      },
+      error: function(xhr) {
+        let msg = 'Error al cambiar contraseña';
+        if (xhr.responseJSON && xhr.responseJSON.password_actual) msg = xhr.responseJSON.password_actual[0];
+        else if (xhr.responseJSON && xhr.responseJSON.detail) msg = xhr.responseJSON.detail;
+        alert(msg);
+        btn.text(originalText).prop('disabled', false);
+      }
+    });
+  });
+  
+  // Logout all
+  $('#btnLogoutAll').on('click', function() {
+    if (!confirm('¿Cerrar sesión en todos los dispositivos? Tu carro persistirá.')) return;
+    
+    const btn = $(this);
+    btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Cerrando...');
+    
+    // Blacklist refresh token
+    const refresh = localStorage.getItem('refresh_token');
+    if (refresh) {
+      $.ajax({
+        url: '/api/auth/logout/',
+        method: 'POST',
+        headers: { ...headers, 'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val() },
+        contentType: 'application/json',
+        data: JSON.stringify({ refresh }),
+        complete: function() {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          window.location.href = '/login/';
+        }
+      });
+    } else {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      window.location.href = '/login/';
+    }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,53 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+env/
+ENV/
+.env
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Media & Static (collected)
+staticfiles/
+media/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# Testing
+.tox/
+.pytest_cache/
+
+# Carpeta personal de respaldo (no forma parte del proyecto)
+cosas que me gustaban que quitaste/
+
+# Migrations (keep initial, ignore generated)
+# apps/*/migrations/*.py
+# !apps/*/migrations/__init__.py
+
+# Python
+*.pyc
+*.pyd
+*.pyo
