@@ -1,0 +1,42 @@
+{
+  // =============================================================================
+  // TAREAS DEL PROYECTO (VS Code) — Ctrl+Shift+P -> "Tareas: ejecutar tarea"
+  // =============================================================================
+  // La tarea "Iniciar proyecto" corre el script de arranque del SO correspondiente:
+  //   Linux/macOS -> ./iniciar.sh
+  //   Windows     -> iniciar.bat
+  // =============================================================================
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Iniciar proyecto",
+      "type": "shell",
+      "command": "./iniciar.sh",
+      "windows": { "command": ".\\iniciar.bat" },
+      "osx": { "command": "./iniciar.sh" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true
+      }
+    },
+    {
+      "label": "Django: migraciones",
+      "type": "shell",
+      "command": "venv/bin/python manage.py migrate",
+      "windows": { "command": "venv\\Scripts\\python manage.py migrate" },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Django: check",
+      "type": "shell",
+      "command": "venv/bin/python manage.py check",
+      "windows": { "command": "venv\\Scripts\\python manage.py check" },
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

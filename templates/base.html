@@ -5,14 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}{{ TEMATICA.nombre_sistema }} - {{ TEMATICA.eslogan }}{% endblock %}</title>
-  <link rel="icon" type="image/png" href="{% static 'assets/logo 1.png' %}">
+  <link rel="icon" type="image/webp" href="{% static 'assets/favicon.webp' %}?v=1">
+  <link rel="apple-touch-icon" href="{% static 'assets/favicon.webp' %}?v=1">
+
+  {# Ruta del billete chileno expuesta a main.js como variable global #}
+  <script>window.ICONO_PESO = "{% static 'assets/iconos/peso-chileno.png' %}";</script>
 
   <!-- Bootstrap 5 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <!-- DataTables + Bootstrap 5 -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
   <!-- Estilos propios (Liquid Glass) - ?v= para forzar recarga tras cambios -->
-  <link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=20261002b">
+  <link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=20261002i">
   {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}index-page{% endblock %}">
@@ -123,7 +127,7 @@
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
   <!-- Script propio (Liquid Glass interactions) -->
-  <script src="{% static 'js/main.js' %}?v=20261002a"></script>
+  <script src="{% static 'js/main.js' %}?v=20261002c"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

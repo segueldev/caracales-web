@@ -5,7 +5,14 @@
 /* Dejé este proyecto bien decorado con glassmorphism porque me puede servir caleta después como portafolio.
    Tengo otros trabajos guardados pero ninguno muestra que sé trabajar bien con Bootstrap y estilos propios así que quise lucirme. */
 
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+/* Tipografías del sitio:
+   - Poppins      : respaldo heredado del mockup original
+   - Bangers      : títulos display con aire de cómic (hero y secciones)
+   - Luckiest Guy : números de estadísticas y títulos de tarjeta
+   - Nunito       : texto corrido (redondeada y amable, mucho menos genérica)
+   - Alfa Slab One: tipografía ÚNICA de la banda "Nuestra historia" y de la
+                    página de la denuncia de plagio (pesada, tipo titular) */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=Alfa+Slab+One&family=Bangers&family=Luckiest+Guy&family=Nunito:wght@400;600;700;800&display=swap');
 
 :root {
   /* Color Palette (OKLCH format matching the mockup) */
@@ -28,22 +35,48 @@
   --input: oklch(0.88 0 0);
   --ring: oklch(0.68 0.19 47);
   --radius: 0.625rem;
+
+  /* Paleta CARACAL: tonos sacados del pelaje del caracal (café, arena,
+     naranja de la oreja y crema). Reemplazan al amarillo neón que dominaba
+     la página, que quedaba muy "genérico". */
+  --caracal-cafe:      #6b4a2f;  /* café profundo (texto sobre claro) */
+  --caracal-cafe-med:  #8b6242;  /* café medio */
+  --caracal-arena:     #dcbc94;  /* arena / beige */
+  --caracal-arena-clr: #ecd6b6;  /* arena clara (texto sobre oscuro) */
+  --caracal-crema:     #f6efe4;  /* blanco crema */
+  --caracal-naranja:   #e08038;  /* naranja oreja (acento principal) */
+  --caracal-naranja-q: #c66326;  /* naranja apagado */
+  --caracal-bermellon: #b2442d;  /* bermellón (hover / alertas) */
 }
 
 /* Base resets & styles */
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: 'Nunito', 'Poppins', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
 }
 
+/* Billete chileno que acompaña a cada precio: "CLP 499.990 [billete]".
+   Hereda la altura del texto (1.05em) para quedar alineado igual en
+   tarjetas grandes, en tablas y en los totales del carro. */
+.ico-peso {
+  height: 1.05em;
+  width: auto;
+  vertical-align: -0.18em;
+  margin-left: 0.3rem;
+  border-radius: 3px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+}
+
 /* Page-specific full-screen background images with dark overlays */
 body.index-page {
-  background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), url('/static/assets/fondo%20inicio.jpg') no-repeat center center;
+  /* Velo NEUTRO (sin azul) sobre la foto de inicio. Es el "fondo real" que
+     se ve por debajo de los indicadores de confianza del hero. */
+  background: linear-gradient(rgba(8, 8, 9, 0.60), rgba(8, 8, 9, 0.60)), url('/static/assets/fondo%20inicio.jpg') no-repeat center center;
   background-size: cover;
   background-attachment: fixed;
 }
@@ -78,6 +111,29 @@ main {
   flex-wrap: wrap;          /* si la marca + enlaces no caben, baja completo a otra fila */
   row-gap: 0.35rem;
   transition: all 0.3s ease;
+}
+
+.navbar-floppa.glass-dark {
+  /* La barra debe verse como vidrio líquido: translúcida y viendo lo que pasa
+     por debajo al desplazar la página. Baja el alpha de .glass-dark (0.48 ->
+     0.34) y elimina el tinte azulado oklch(hue 250) para que no se vea como
+     una placa negra clavada arriba. */
+  background: rgba(15, 14, 16, 0.34);
+}
+
+/* Textura de piedra laja DENTRO de la barra (no como banda pegada detrás).
+   Va a muy baja opacidad para complementar el vidrio líquido: el
+   backdrop-filter sigue difumando lo que pasa por debajo al desplazar la
+   página, de modo que la barra se ve transparente y con grano de piedra. */
+.navbar-floppa::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: url('/static/assets/textura-piedra-laja.jpg') center / 300px auto repeat;
+  opacity: 0.16;
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* Este efecto de vidrio (backdrop-filter) me costó caleta dejarlo fino al principio, no me pescaba el blur.
@@ -161,6 +217,10 @@ main {
 .navbar-nav-floppa a,
 .navbar-brand-floppa span {
   white-space: nowrap;
+  /* Marca en tipografía de cómic (Bangers) para que no se vea genérica */
+  font-family: 'Bangers', 'Poppins', cursive;
+  font-weight: 400;
+  letter-spacing: 0.04em;
 }
 
 /* En pantallas angostas se aprietan los ítems para que quepan más */
@@ -392,6 +452,34 @@ main {
   }
 }
 
+/* ---------- Insignia de categoría (global) ---------- */
+/* Textura de nariz + BORDE BLANCO GRUESO (antes era un filete naranja, el
+   usuario lo pidió en blanco) y tamaños más grandes.
+   Vive aquí y no en el home porque la usan varias páginas: el home
+   ("¿Por qué elegirnos?", "Destacados", "La academia en números"...) y
+   /nuestra-historia/ ("Manifiesto de origen"). Si estuviera sólo en el home,
+   en el resto de páginas se vería como texto pelado sin píldora.
+   La ruta de la textura es RELATIVA a este CSS (/static/css/...), por eso
+   se escribe "../assets/" y no "/static/assets/". */
+.category-badge {
+  display: inline-block;
+  --tex-velo: 0.58;
+  background-color: #0b0b0c;
+  background-image:
+    linear-gradient(rgba(8, 8, 9, var(--tex-velo)), rgba(8, 8, 9, var(--tex-velo))),
+    url("../assets/textura-floppa.jpg");
+  background-size: cover;
+  background-position: center 45%;
+  border: 3px solid var(--caracal-crema);
+  color: var(--caracal-arena-clr);
+  padding: 0.55rem 1.2rem;
+  border-radius: 9999px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
 /* ---------- Tables (DataTables) Styling ---------- */
 .table-responsive-wrapper {
   overflow-x: auto;
@@ -620,7 +708,16 @@ table.dataTable tbody td a:hover {
 
 /* ---------- Site Footer ---------- */
 .site-footer {
+  /* Textura elegida por el usuario: mosaico de piedra/terracota
+     (static/assets/textura-footer.jpg) bajo una capa oscura para que el texto
+     de 11px mantenga el contraste AA (WCAG 1.4.3). */
   background-color: var(--secondary);
+  background-image:
+    linear-gradient(rgba(10, 10, 11, 0.66), rgba(10, 10, 11, 0.66)),
+    url('/static/assets/textura-footer.jpg');
+  background-size: cover, 520px auto;
+  background-repeat: no-repeat, repeat;
+  background-position: center, center;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   padding: 1.25rem 1rem;
   width: 100%;
@@ -653,7 +750,13 @@ table.dataTable tbody td a:hover {
 }
 
 .animate-page-in {
-  animation: page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  /* Fill-mode `backwards` (y NO `both`): al terminar la animación el <main>
+     vuelve a su estado base SIN transform. Con `both` el transform de la
+     animación quedaba persistente y, como todo elemento con `transform`
+     se convierte en bloque contenedor de lo `position: fixed`, el modal de
+     detalle del curso quedaba atrapado dentro de <main> (medía lo mismo que
+     la página entera, la pantalla se bloqueaba y no se podía cerrar). */
+  animation: page-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 @keyframes error-in {

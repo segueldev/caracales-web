@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{# Título de la pestaña (SEO + barra del navegador) #}
+{% block title %}El plagio de Ducommun Marcelo y nuestra historia de origen - {{ TEMATICA.nombre_sistema }}{% endblock %}
+
+{# Hereda el fondo fotográfico del home para que la página no quede "pelada" #}
+{% block body_class %}index-page{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ==========================================================================
+   PÁGINA: NUESTRA HISTORIA / DENUNCIA DE PLAGIO
+   Panel sólido (sin cristal, según la regla de diseño del proyecto) con
+   titular en la tipografía única Alfa Slab One, la imagen entregada por el
+   usuario y el texto institucional.
+   ========================================================================== */
+.manifiesto {
+  position: relative;
+  /* Rojo de la acusación: se usa para el subrayado sobre "Ducommun Marcelo" */
+  --rojo-denuncia: #e03131;
+  background-color: #121214;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1.5rem;
+  padding: clamp(1.6rem, 4vw, 3.2rem);
+  box-shadow: 0 40px 90px -50px rgba(0, 0, 0, 0.95);
+}
+
+/* Icono de 16 px: la clase `.ico-16` sólo está declarada en el home, así que
+   aquí se define aparte para que el SVG del enlace no estire hasta 300x150. */
+.ico-16 { width: 16px; height: 16px; flex: none; }
+
+/* Enlace de regreso al inicio */
+.manifiesto-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+  color: var(--caracal-arena-clr);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.manifiesto-volver svg { flex: none; }
+.manifiesto-volver:hover { color: var(--caracal-naranja); text-decoration: none; }
+
+/* Fila superior: volver + sello de sección, en la misma línea */
+.manifiesto-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 1.2rem;
+}
+
+/* Titular: tipografía única (Alfa Slab One), igual que la banda del home */
+.manifiesto-titulo {
+  font-family: 'Alfa Slab One', 'Poppins', serif;
+  font-weight: 400;
+  color: #ffffff;
+  font-size: clamp(1.55rem, 4.4vw, 3rem);
+  line-height: 1.13;
+  margin: 0.7rem 0 1.6rem;
+  text-shadow: 0 8px 28px rgba(0, 0, 0, 0.85);
+}
+
+/* ANIMACIÓN DE ACUSACIÓN: al pasar el mouse por el titular, "Ducommun Marcelo"
+   se subraya en rojo. El subrayado es un degradado de fondo anclado al borde
+   inferior que se despliega de izquierda a derecha (background-size 0% → 100%),
+   de modo que no salta sino que "se dibuja". */
+.manifiesto-titulo .ducommun {
+  position: relative;
+  padding-bottom: 0.05em;
+  background-image: linear-gradient(var(--rojo-denuncia), var(--rojo-denuncia));
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 0.13em;
+  transition: background-size 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+              color 0.5s ease;
+}
+.manifiesto-titulo:hover .ducommun,
+.manifiesto-titulo:focus-within .ducommun {
+  background-size: 100% 0.13em;
+  color: var(--rojo-denuncia);
+  text-shadow: 0 0 22px rgba(224, 49, 49, 0.55);
+}
+/* Con movimiento reducido se muestra el subrayado sin animar */
+@media (prefers-reduced-motion: reduce) {
+  .manifiesto-titulo .ducommun { transition: none; background-size: 100% 0.13em; }
+}
+
+/* Logo de prensa (meganoticias.png, entregado por el usuario): a la derecha
+   del sello de sección. La imagen ya trae fondo blanco, así que la placa la
+   abraza SIN padding extra: con `flex: 1` se estiraba y quedaba un rectángulo
+   blanco vacío a la izquierda del logo. `margin-left: auto` lo pega al final
+   de la fila. */
+.manifiesto-noticias {
+  flex: 0 1 auto;
+  width: auto;
+  max-width: 100%;
+  max-height: 5.5rem;
+  height: auto;
+  margin-left: auto;
+  object-fit: contain;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 0.7rem;
+  box-shadow: 0 14px 32px -20px rgba(0, 0, 0, 0.95);
+}
+
+/* Imagen entregada por el usuario */
+.manifiesto-figura { margin: 0 0 1.9rem; }
+.manifiesto-figura img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+.manifiesto-figura figcaption {
+  margin-top: 0.75rem;
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  font-style: italic;
+}
+
+/* Cuerpo del texto: tono institucional con el chiste intacto */
+.manifiesto-cuerpo {
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.85;
+  font-size: 1.02rem;
+}
+.manifiesto-cuerpo h2 {
+  font-family: 'Bangers', 'Poppins', cursive;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: var(--caracal-arena-clr);
+  font-size: 1.45rem;
+  margin: 2.1rem 0 0.7rem;
+}
+.manifiesto-cuerpo p { margin-bottom: 1.1rem; }
+.manifiesto-cuerpo strong { color: var(--caracal-crema); }
+
+/* Firma: el sello "Plágio é crime" del usuario va EN GRANDE a la izquierda
+   del bloque de firma. La fila empuja todo hacia la derecha (coherente con el
+   texto de la firma) y el sello queda pegado a la izquierda del texto. */
+.firma-fila {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(1rem, 3vw, 2rem);
+  margin-top: 2.1rem;
+  padding-top: 1.3rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.16);
+}
+.firma-sello {
+  flex: 0 0 auto;
+  width: clamp(7rem, 17vw, 12rem);
+  height: auto;
+  transform: rotate(-5deg);
+  filter: drop-shadow(0 16px 30px rgba(0, 0, 0, 0.75));
+}
+
+/* Cierre / firma */
+.manifiesto-firma {
+  margin: 0;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.68);
+  text-align: right;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<article class="manifiesto">
+
+  <!-- Fila superior: regreso al inicio + sello de sección -->
+  <div class="manifiesto-top">
+    <a class="manifiesto-volver" href="{% url 'home' %}">
+      <svg class="ico-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+      </svg>
+      Volver al inicio
+    </a>
+    <!-- Sello de sección -->
+    <span class="category-badge mb-0">Manifiesto de origen</span>
+    <!-- Logo de prensa: ocupa el sobrante de la fila, a lo largo -->
+    <img class="manifiesto-noticias"
+         src="{% static 'assets/iconos/meganoticias.png' %}"
+         alt="Meganoticias">
+  </div>
+
+  <!-- Titular principal. "Ducommun Marcelo" se subraya en rojo al hacer hover -->
+  <h1 class="manifiesto-titulo">
+    El plagio de <span class="ducommun">Ducommun Marcelo</span> y nuestra historia de origen
+  </h1>
+
+  <!-- Imagen entregada por el usuario -->
+  <figure class="manifiesto-figura">
+    <img src="{% static 'assets/historia-esfinge.jpg' %}"
+         alt="Caracales imponiéndose sobre gatos esfinge en una sala de estar">
+    <figcaption>
+      Figura 1. Evidencia A: la línea caracal, arriba; la línea esfinge, debajo.
+      Material incorporado al expediente de la denuncia.
+    </figcaption>
+  </figure>
+
+  <!-- Texto institucional -->
+  <div class="manifiesto-cuerpo">
+    <p>
+      En cumplimiento con su deber de transparencia, la <strong>Academia Felina Floppa</strong>
+      pone en conocimiento de la comunidad académica los hechos que se detallan a continuación.
+      Lo que sigue ha sido redactado con la seriedad que el asunto merece.
+    </p>
+
+    <h2>1. Antecedentes</h2>
+    <p>
+      Desde su fundación, esta casa de estudios ha concentrado su línea de investigación en el
+      <strong>gato esfinge</strong>. Todos los trabajos, prácticas y presentaciones del autor han
+      tenido, sin una sola excepción, a los esfinge como protagonistas. Se trata de una marca
+      registrada de identidad intelectual: donde hay esfinge, hay obra mía.
+    </p>
+
+    <h2>2. Hecho denunciado</h2>
+    <p>
+      El pasado <strong>miércoles</strong>, el señor <strong>Ducommun Marcelo</strong> presentó,
+      como si el asunto le perteneciera, un trabajo sobre gatos esfinge. Esa idea no es suya:
+      es nuestra. Y no es una opinión, sino un hecho que está documentado y es verificable.
+    </p>
+    <p>
+      Por tanto, esta institución se ve en la obligación de hacer constar públicamente que lo
+      ocurrido configura un <strong>plagio de manual</strong>, y de lamentar que un tema tan
+      nuestro haya circulado por ahí sin la firma correspondiente.
+    </p>
+
+    <h2>3. Nuestra respuesta</h2>
+    <p>
+      Ante la copia, la respuesta no fue imitar: fue superar. Así nació la
+      <strong>Academia de Caracales</strong>: felinos mucho más fuertes y mucho mejores que los
+      gatos esfinge, entrenados para el sigilo, la caza y el ronroneo de nivel profesional.
+    </p>
+    <p>
+      Los gatos esfinge, en cambio, quedan reducidos a lo que siempre fueron cuando se les compara
+      con esta casa: <strong>mera imitación de mi obra maestra</strong>. La misma idea, ejecutada
+      por terceros, con un resultado inevitablemente inferior.
+    </p>
+
+    <h2>4. Conclusión</h2>
+    <p>
+      Matricúlate en una academia que <strong>genera sus propias ideas</strong>. La otra, por
+      definición, siempre llegará tarde.
+    </p>
+
+    <!-- Firma con el sello grande a la izquierda -->
+    <div class="firma-fila">
+      <img class="firma-sello"
+           src="{% static 'assets/sello-plagio.webp' %}"
+           alt="Sello: el plagio es delito, Lei nº 9.610/98">
+      <p class="manifiesto-firma">
+        Consejo Directivo · Academia Felina Floppa<br>
+        <small>Documento de circulación interna y pública a la vez.</small>
+      </p>
+    </div>
+  </div>
+
+</article>
+{% endblock %}

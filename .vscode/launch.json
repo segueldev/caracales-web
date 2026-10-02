@@ -1,0 +1,85 @@
+{
+  // =============================================================================
+  // ACADEMIA FELINA FLOPPA — configuración de depuración (VS Code)
+  // =============================================================================
+  // Se usa el debugger integrado de VS Code (extensión "Python" o "Python Debugger").
+  // Cada configuración se lanza desde la pestaña "Ejecutar y depurar" (Ctrl+Shift+D)
+  // y desplegando el combo superior.
+  //
+  // IMPORTANTE: los servidores usan `--noreload`. Sin esa bandera Django levanta
+  // un segundo proceso en "auto-reload" y el breakpoint queda en un hijo al que
+  // el debugger no se engancha: los breakpoints no se activan.
+  //
+  // En Windows el intérprete es venv\Scripts\python.exe (lo resuelve VS Code con
+  // python.defaultInterpreterPath de .vscode/settings.json).
+  // =============================================================================
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Django: servidor de desarrollo",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["runserver", "0.0.0.0:8000", "--noreload"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "django": true,
+      "justMyCode": true,
+      "env": { "DJANGO_SETTINGS_MODULE": "academia_felina.settings" },
+      "presentation": { "group": "1-django", "order": 1 }
+    },
+    {
+      "name": "Django: migraciones",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["migrate"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "django": true,
+      "presentation": { "group": "2-tareas", "order": 1 }
+    },
+    {
+      "name": "Django: datos de demostración",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["poblar_demo"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "django": true,
+      "presentation": { "group": "2-tareas", "order": 2 }
+    },
+    {
+      "name": "Django: shell de Django",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["shell"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "django": true,
+      "presentation": { "group": "2-tareas", "order": 3 }
+    },
+    {
+      "name": "Python: ejecutar archivo actual",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "cwd": "${fileDirname}",
+      "justMyCode": true,
+      "presentation": { "group": "3-python", "order": 1 }
+    },
+    {
+      "name": "Python: consola interactiva",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/manage.py",
+      "args": ["shell"],
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}",
+      "presentation": { "group": "3-python", "order": 2 }
+    }
+  ]
+}

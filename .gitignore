@@ -17,10 +17,14 @@ db.sqlite3-journal
 
 # Media & Static (collected)
 staticfiles/
-media/
+# Subidas de media: se ignora todo SALVO las imágenes de demostración que usa
+# el catálogo, para que el proyecto funcione recién clonado.
+media/*
+!media/cursos/
 
-# IDE
-.vscode/
+# IDE / editor de código
+# .vscode/ se SUBE a propósito: trae launch.json, settings.json y tasks.json
+# con la depuración del proyecto configurada (requisito de la defensa en VS Code).
 .idea/
 *.swp
 *.swo

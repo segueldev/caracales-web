@@ -9,6 +9,7 @@ con template liquid glass. Incluyen footer con datos del alumno (requerido por p
 from django.views.generic import TemplateView
 from django.http import JsonResponse
 from django.conf import settings
+from django.shortcuts import redirect
 from django.contrib.auth.mixins import LoginRequiredMixin
 from apps.academico.models import Curso, AreaConocimiento
 from apps.usuarios.models import Usuario
@@ -63,7 +64,6 @@ class HomeView(TemplateView):
                 'description': 'Diseñados por expertos caracales',
                 'icon': '📚',
                 'icono_img': 'assets/iconos/estadisticas/cursos.png',
-                'icon_bg': 'tone-amber',
             },
             {
                 'value': total_areas,
@@ -71,7 +71,6 @@ class HomeView(TemplateView):
                 'description': 'Caza, Sigilo, Ronroneo y más',
                 'icon': '🎯',
                 'icono_img': 'assets/iconos/estadisticas/areas.png',
-                'icon_bg': 'tone-sand',
             },
             {
                 'value': total_estudiantes,
@@ -79,39 +78,44 @@ class HomeView(TemplateView):
                 'description': 'Formando la próxima manada élite',
                 'icon': '🐱',
                 'icono_img': 'assets/iconos/estadisticas/estudiantes.png',
-                'icon_bg': 'tone-green',
             },
         ]
 
-        # Features para la sección de características (mismo criterio de iconos)
+        # Features para la sección de características (mismo criterio de iconos).
+        # `dato` es el "dato curioso de caracales" que muestra la tarjeta al
+        # hacer clic (ver `.fc-dato` / `activarFeature()` en home.html).
         features = [
             {
                 'title': 'Instructores Legendarios',
                 'description': 'Aprende de Floppa y los maestros del sigilo felino con décadas de experiencia.',
                 'icon': '🏆',
                 'icono_img': 'assets/iconos/caracteristicas/instructores.png',
-                'icon_bg': 'tone-amber',
+                'dato': 'Los caracales saltan hasta 3 metros de altura y así alcanzan '
+                        'a las aves en pleno vuelo, con un solo impulso de las patas traseras.',
             },
             {
                 'title': 'Metodología Práctica',
                 'description': 'Ejercicios reales de caza, sigilo y comunicación. No solo teoría, acción pura.',
                 'icon': '⚔️',
                 'icono_img': 'assets/iconos/caracteristicas/metodologia.png',
-                'icon_bg': 'tone-red',
+                'dato': 'Cazan de noche: su oído es tan fino que detecta a una presa '
+                        'a más de 50 metros, incluso moviéndose sobre hojarasca.',
             },
             {
                 'title': 'Certificación Oficial',
                 'description': 'Recibe tu certificado UUID único verificable. Reconocido en todo el territorio felino.',
                 'icon': '📜',
                 'icono_img': 'assets/iconos/caracteristicas/certificacion.png',
-                'icon_bg': 'tone-sand',
+                'dato': 'Su nombre viene del turco "karakulak", que significa literalmente '
+                        '"oreja negra": las puntas de sus orejas son negras y con pincelada.',
             },
             {
                 'title': 'Comunidad Activa',
                 'description': 'Acceso a la manada privada. Comparte presas, tips y ruge con otros estudiantes.',
                 'icon': '👥',
                 'icono_img': 'assets/iconos/caracteristicas/comunidad.png',
-                'icon_bg': 'tone-green',
+                'dato': 'Tienen más de 20 vocalizaciones: ronronean, silban y maúllan '
+                        'prácticamente igual que un gato de casa.',
             },
         ]
         
@@ -140,14 +144,46 @@ class CatalogoView(TemplateView):
         return context
 
 
+class NuestraHistoriaView(TemplateView):
+    """
+    Página institucional "/nuestra-historia/".
+
+    Es la subpágina a la que lleva la banda clicable del home ("Nuestra
+    historia y nuestra lucha contra el plagio"). Muestra el manifiesto de
+    origen de la academia y la denuncia de plagio, con la imagen entregada
+    por el usuario. Es una vista pública de solo lectura.
+    """
+    template_name = 'core/nuestra_historia.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'page_title': 'Nuestra historia y la lucha contra el plagio',
+            'page_description': (
+                'Manifiesto de origen de la Academia Felina Floppa y denuncia '
+                'pública del plagio de Ducommun Marcelo.'
+            ),
+        })
+        return context
+
+
 class MiCarroView(LoginRequiredMixin, TemplateView):
     """Vista del carro de matrícula persistente (solo estudiantes)"""
     template_name = 'core/mi_carro.html'
     login_url = '/login/'
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.es_estudiante:
-            from django.shortcuts import redirect
+        """
+        Control de acceso en dos etapas.
+
+        IMPORTANTE: AnonymousUser NO tiene los atributos `es_estudiante` /
+        `es_coordinador` (son propiedades del modelo Usuario). Si el chequeo de
+        rol se ejecuta antes de pasar por LoginRequiredMixin, la vista revienta
+        con AttributeError y Django devuelve un error 500. Por eso el orden es:
+            1) autenticación  -> LoginRequiredMixin redirige a /login/
+            2) rol            -> se evalúa solo si ya hay sesión
+        """
+        if request.user.is_authenticated and not request.user.es_estudiante:
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
@@ -158,8 +194,8 @@ class MisMatriculasView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.es_estudiante:
-            from django.shortcuts import redirect
+        # Ver nota detallada en MiCarroView.dispatch: primero sesión, luego rol.
+        if request.user.is_authenticated and not request.user.es_estudiante:
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
@@ -170,8 +206,8 @@ class CoordinadorDashboardView(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.es_coordinador:
-            from django.shortcuts import redirect
+        # Ver nota detallada en MiCarroView.dispatch: primero sesión, luego rol.
+        if request.user.is_authenticated and not request.user.es_coordinador:
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 

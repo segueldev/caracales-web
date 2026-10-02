@@ -26,14 +26,35 @@
 /* La página de inicio tiene fondo oscuro (body.index-page), por eso el
    texto por defecto aquí es claro para garantizar contraste AA. */
 .home-container {
+  --home-pad: clamp(1.25rem, 4vw, 3.25rem); /* margen lateral flexible */
   max-width: 1280px;
   color: #e7e5e4;
+  padding-left: var(--home-pad);
+  padding-right: var(--home-pad);
 }
 
 /* Escalas de texto fluidas */
-.t-hero { font-size: clamp(2.1rem, 5vw, 3.5rem); }
-.t-h2   { font-size: clamp(1.6rem, 3.4vw, 2.5rem); }
-.t-h3   { font-size: 1.15rem; }
+/* Tipografía de cómic para los títulos display.
+   Bangers = hero y títulos de sección · Luckiest Guy = títulos de tarjeta */
+.t-hero {
+  font-size: clamp(2.1rem, 5vw, 3.5rem);
+  font-family: 'Bangers', 'Poppins', cursive;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.04;
+}
+.t-h2   {
+  font-size: clamp(1.6rem, 3.4vw, 2.5rem);
+  font-family: 'Bangers', 'Poppins', cursive;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.t-h3   {
+  font-size: 1.15rem;
+  font-family: 'Luckiest Guy', 'Poppins', cursive;
+  font-weight: 400 !important;   /* la fuente solo trae 400; evita falso bold */
+  letter-spacing: 0.01em;
+}
 .lh-tight { line-height: 1.2; }
 .fw-medium { font-weight: 500; }
 
@@ -42,8 +63,8 @@
 .txt-300 { color: #d6d3d1; }
 .txt-400 { color: #a8a29e; }
 .txt-500 { color: #78716c; }
-.txt-amber-300 { color: #fcd34d; }
-.txt-amber-400 { color: #fbbf24; }
+.txt-amber-300 { color: var(--caracal-arena-clr); }
+.txt-amber-400 { color: var(--caracal-naranja); }
 .txt-green-500 { color: #4ade80; }
 .txt-sand      { color: #d9a96a; }
 .txt-xs { font-size: 0.75rem; }
@@ -53,6 +74,23 @@
 .mw-2xl { max-width: 42rem; }
 .mw-xs  { max-width: 20rem; }
 
+/* ---------- 1b. Textura de nariz de Floppa ---------- */
+/* Foto macro de la nariz del caracal usada como fondo de las insignias y
+   los botones secundarios, en vez del relleno naranja plano.
+   Se compone de dos capas: un velo oscuro encima (para que el texto ámbar
+   cumpla contraste AA sobre cualquier zona clara de la foto) y la imagen
+   debajo. --tex-velo deja ajustar cuánto se oscurece en cada elemento. */
+.tex-floppa {
+  --tex-velo: 0.62;
+  background-color: #0b0b0c;
+  background-image:
+    linear-gradient(rgba(8, 8, 9, var(--tex-velo)), rgba(8, 8, 9, var(--tex-velo))),
+    url("{% static 'assets/textura-floppa.jpg' %}");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
 /* ---------- 2. Paneles sólidos, radios y bordes ---------- */
 /* Sin backdrop-filter: el cristal es solo de la navbar */
 .panel-card {
@@ -61,8 +99,15 @@
   box-shadow: 0 16px 36px -24px rgba(0, 0, 0, 0.9);
 }
 .chip-panel {
-  background: rgba(12, 12, 14, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  /* Insignia del hero: textura de nariz en vez de relleno gris */
+  --tex-velo: 0.55;
+  background-color: #0b0b0c;
+  background-image:
+    linear-gradient(rgba(8, 8, 9, var(--tex-velo)), rgba(8, 8, 9, var(--tex-velo))),
+    url("{% static 'assets/textura-floppa.jpg' %}");
+  background-size: cover;
+  background-position: center 40%;
+  border: 1px solid rgba(224, 128, 56, 0.42);
 }
 .rad-md { border-radius: 0.9rem; }
 .rad-lg { border-radius: 1.15rem; }
@@ -74,6 +119,15 @@
 .ico-20 { width: 20px; height: 20px; }
 .ico-24 { width: 24px; height: 24px; }
 
+/* Iconos PNG de los indicadores del hero (certificado, vitalicio, privada):
+   imágenes del usuario, bastante más grandes que los SVG que reemplazan. */
+.ico-indicador {
+  width: 2.2rem;
+  height: 2.2rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 /* Ranura de icono de imagen (se reemplaza sola si subes tu archivo) */
 .icon-slot {
   display: flex;
@@ -81,7 +135,9 @@
   justify-content: center;
   overflow: hidden;
 }
-.icon-slot img { width: 70%; height: 70%; object-fit: contain; }
+/* Iconos a tamaño completo: los de 256px ya traen su propio aire interno,
+   así que al llenar la ranura quedan mucho más imponentes. */
+.icon-slot img { width: 100%; height: 100%; object-fit: contain; }
 
 /* ---------- 4. Luces decorativas del hero ---------- */
 .blob {
@@ -94,54 +150,95 @@
 .blob-2 { bottom: 18%; right: 1rem; width: 23rem; height: 23rem; }
 .blob-3 { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(600px, 90%); height: 600px; }
 .blob-amber     { background: rgba(245, 158, 11, 0.12); }
-.blob-amber-soft{ background: rgba(251, 191, 36, 0.06); }
+.blob-amber-soft{ background: rgba(224, 128, 56, 0.06); }
 .blob-sand      { background: rgba(217, 169, 106, 0.10); }
 
 /* ---------- 5. Fondos de sección (neutros, sin azul) ---------- */
-/* Velo oscuro sobre la foto de fondo del hero para garantizar
-   contraste AA del texto claro sobre imagen (WCAG 1.4.3) */
+/* IMPORTANTE: la barra NO lleva un fondo "pegado" (una banda de ancho completo
+   detrás del navbar) al desplazarse: eso cortaba el efecto Liquid Glass y se
+   veía un rectángulo negro/oscuro clavado arriba. Se eliminó .header-sticky::before
+   y la piedra laja ahora vive DENTRO de la propia barra (ver estilos.css,
+   .navbar-floppa::after), donde complementa el vidrio y deja ver lo que pasa
+   por debajo mientras la página se desplaza. */
+
+/* Velo + TEXTURA DE PIEDRA LAJA detrás de todo el contenido del hero
+   (insignia, título, descripción, botones e indicadores de confianza).
+   La piedra se repite en mosaico y el degradado oscuro encima garantiza el
+   contraste AA del texto claro sobre imagen (WCAG 1.4.3). */
 .home-hero::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(10, 10, 11, 0.86) 0%,
-    rgba(10, 10, 11, 0.72) 45%,
-    rgba(10, 10, 11, 0.90) 100%
-  );
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(10, 10, 11, 0.80) 0%,
+      rgba(10, 10, 11, 0.74) 45%,
+      rgba(10, 10, 11, 0.90) 100%
+    ),
+    url("{% static 'assets/textura-piedra-laja.jpg' %}");
+  background-size: cover, 460px auto;
+  background-repeat: no-repeat, repeat;
+  background-position: center, center;
   z-index: 0;
 }
-.bg-grad-down {
-  background: linear-gradient(180deg, rgba(10, 10, 11, 0.82) 0%, rgba(10, 10, 11, 0.94) 100%);
+/* A partir de los indicadores de confianza hacia ABAJO el velo se retira por
+   completo: ahí se ve la foto real del fondo (petición explícita). Las
+   tarjetas siguen siendo paneles sólidos, así que su texto no se afecta. */
+.bg-grad-down,
+.bg-soft,
+.bg-veil { background: transparent; }
+/* Sin velo, los títulos de sección descansan directo sobre la foto: sombra
+   suave para conservar la legibilidad del texto claro (WCAG 1.4.3). */
+.home-section h1,
+.home-section h2,
+.home-section h3,
+.home-section .lead,
+.home-section .section-sub {
+  text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9), 0 1px 4px rgba(0, 0, 0, 0.7);
 }
-.bg-soft { background: rgba(10, 10, 11, 0.84); }
-/* Velo para las secciones que dejan ver la foto de fondo */
-.bg-veil { background: rgba(10, 10, 11, 0.86); }
 
 /* ---------- 6. Layout de secciones ---------- */
-.home-section { padding: 3.5rem 0; }
+/* Las secciones se salen del margen lateral (--home-pad) con margen negativo
+   para que sus fondos llegen al borde, y vuelven a aplicar ese mismo margen
+   como padding para que el contenido quede alineado con el resto de la página. */
+.home-section {
+  margin-left: calc(-1 * var(--home-pad));
+  margin-right: calc(-1 * var(--home-pad));
+  padding: 3.5rem var(--home-pad);
+}
 .home-hero {
+  margin-left: calc(-1 * var(--home-pad));
+  margin-right: calc(-1 * var(--home-pad));
+  padding: 4.5rem var(--home-pad);
   min-height: 52vh;
-  padding: 4.5rem 0;
 }
 @media (min-width: 768px) {
-  .home-section { padding: 5.5rem 0; }
-  .home-hero { min-height: 60vh; }
+  .home-section { padding-top: 5.5rem; padding-bottom: 5.5rem; }
+  .home-hero { min-height: 60vh; padding-top: 5.5rem; padding-bottom: 5.5rem; }
 }
 
-/* Logo decorativo del hero */
+/* Logo decorativo del hero.
+   Se redujo y se ancló a la DERECHA de la imagen de "Nuevos Socios", pero
+   subida hacia arriba (pedida así por el usuario). Opacidad alta para que se
+   vea CLARAMENTE y con animación de entrada la primera vez que carga la
+   página (de 0 a su opacidad final, con desplazamiento y escala). */
 .hero-logo {
   position: absolute;
   right: 0;
-  bottom: 0;
-  width: 15rem;
-  height: 15rem;
-  opacity: 0.12;
+  top: -3rem;
+  width: 9rem;
+  height: 9rem;
+  opacity: 0;
+  animation: heroLogoAparece 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) 0.45s forwards;
   pointer-events: none;
 }
+@keyframes heroLogoAparece {
+  from { opacity: 0;   transform: translateY(22px) scale(0.9); }
+  to   { opacity: 0.68; transform: translateY(0) scale(1); }
+}
 @media (min-width: 640px) {
-  .hero-logo { width: 20rem; height: 20rem; }
+  .hero-logo { width: 12rem; height: 12rem; }
 }
 
 /* ---------- 7. Imágenes ---------- */
@@ -174,7 +271,7 @@
 }
 
 /* ---------- 8. Estados interactivos ---------- */
-.hover-amber:hover { color: #fbbf24 !important; }
+.hover-amber:hover { color: var(--caracal-naranja) !important; }
 .group-card { position: relative; }
 .group-card .group-overlay { opacity: 0; transition: opacity 0.3s ease; }
 .group-card:hover .group-overlay { opacity: 1; }
@@ -192,13 +289,19 @@
   display: block;
   width: 150px;
   height: 150px;
-  object-fit: cover;
-  border-radius: 50%;
+  /* La imagen ya es un RECORTE con transparencia: hay que mostrarla entera y
+     sin recorte circular, de lo contrario se ve un disco negro detrás. */
+  object-fit: contain;
   cursor: pointer;
   transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), filter 0.25s ease;
-  box-shadow: 0 16px 34px -16px rgba(0, 0, 0, 0.9);
+  /* `drop-shadow` (y no `box-shadow`) para que la sombra siga la silueta de
+     la nariz en vez de dibujar un círculo. */
+  filter: drop-shadow(0 14px 20px rgba(0, 0, 0, 0.85));
 }
-.btn-imagen-link:hover .btn-nariz { transform: scale(1.06); filter: brightness(1.08); }
+.btn-imagen-link:hover .btn-nariz {
+  transform: scale(1.06);
+  filter: brightness(1.12) drop-shadow(0 18px 26px rgba(0, 0, 0, 0.9));
+}
 .btn-imagen-link:active .btn-nariz { transform: scale(0.97); }
 @media (min-width: 768px) { .btn-nariz { width: 175px; height: 175px; } }
 
@@ -221,6 +324,20 @@
 }
 .pulse { animation: pulse 2s ease-in-out infinite; }
 
+/* Punto de la insignia: ahora es la imagen de la nariz de Floppa que eligió
+   el usuario (static/assets/iconos/punto-floppa.png) en vez del círculo
+   amarillo genérico. Mantiene la animación .pulse de "viene y va". */
+.badge-dot {
+  width: auto;
+  /* Mucho más grande, como pidió el usuario: sobresale un poco de la
+     píldora para que el tamaño no engorde demasiado el contenedor. */
+  height: 3.2em;
+  flex-shrink: 0;
+  margin: -0.8em -0.3em;
+  vertical-align: middle;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.72));
+}
+
 /* Reveal al hacer scroll (lo activa este template con jQuery) */
 .reveal {
   opacity: 0;
@@ -230,16 +347,57 @@
 .reveal.active { opacity: 1; transform: translateY(0); }
 
 /* ---------- 10. Tarjetas y botones ---------- */
-.course-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+.course-card { transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: pointer; }
 .course-card:hover { transform: translateY(-6px); box-shadow: 0 22px 44px -26px rgba(0, 0, 0, 0.95); }
 
-/* Texto con degradado de marca (ámbar → naranja) */
+/* Texto con degradado de marca en paleta CARACAL (naranja oreja → café).
+   El último tramo se aclaró un poco: el café original quedaba casi negro
+   sobre el fondo oscuro y el texto dejaba de leerse. */
 .gradient-text {
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 55%, #ef4444 100%);
+  background: linear-gradient(135deg, var(--caracal-naranja) 0%, var(--caracal-naranja-q) 55%, #b57c46 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
   color: transparent;
+}
+
+/* Contorno blanco por fuera de los textos café (pedido del usuario).
+
+   IMPORTANTE: NO se puede poner `-webkit-text-stroke` sobre el propio
+   `.gradient-text`. El orden de pintado dentro de un elemento es
+   1) background (ahí vive el degradado recortado al texto) y 2) texto
+   (stroke + fill). Como el fill es transparente, el trazo crema de 4px
+   tapaba los 2px exteriores de cada letra: en un título de 31px eso deja
+   1 o 2 px de degradado visible, el texto se volvía una mancha blanca
+   sin definición y se leía "borroso".
+
+   La solución es pintar el contorno en un pseudo-elemento con `z-index:
+   negativo`: al no ser `.gradient-text` un contexto de apilamiento, ese
+   pseudo-elemento baja al contexto del ancestro y se pinta ANTES que el
+   degradado, de modo que el trazo sólo asoma por fuera de las letras. */
+.t-h2 .gradient-text {
+  position: relative;
+  /* Sin salto de línea: el halo y el texto deben medir exactamente lo mismo */
+  white-space: nowrap;
+}
+.t-h2 .gradient-text::before {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  white-space: nowrap;
+  -webkit-text-stroke: 3px var(--caracal-crema);
+  -webkit-text-fill-color: var(--caracal-crema);
+  color: var(--caracal-crema);
+}
+
+/* Los números de estadística NO llevan degradado (su `color` es opaco), así
+   que ahí el trazo sí funciona bien: el relleno tapa la mitad interior del
+   trazo y sólo queda el halo por fuera. */
+.stat-number {
+  -webkit-text-stroke: 3px var(--caracal-crema);
+  paint-order: stroke fill;
 }
 
 .btn-primary-floppa {
@@ -247,20 +405,20 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  background: linear-gradient(135deg, var(--caracal-naranja) 0%, var(--caracal-naranja-q) 100%);
   border: none;
   color: #1c1917;
-  font-weight: 600;
+  font-weight: 700;
   padding: 0.85rem 1.9rem;
   border-radius: 9999px;
   text-decoration: none;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 14px rgba(251, 191, 36, 0.28);
+  box-shadow: 0 4px 14px rgba(224, 128, 56, 0.30);
 }
 .btn-primary-floppa:hover,
 .btn-primary-floppa:focus {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(251, 191, 36, 0.38);
+  box-shadow: 0 8px 25px rgba(224, 128, 56, 0.42);
   color: #1c1917;
 }
 .btn-primary-floppa:active { transform: translateY(0) scale(0.98); }
@@ -271,90 +429,305 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  background: transparent;
-  border: 2px solid rgba(251, 191, 36, 0.50);
-  color: #fbbf24;
+  /* Textura de nariz en lugar de fondo transparente */
+  --tex-velo: 0.58;
+  background-color: #0b0b0c;
+  /* Borde con TEXTURA DE CARACAL (texturacaracal.webp) en vez del contorno
+     naranja neón, como pidió el usuario.
+     Técnica: tres capas de fondo. Las dos primeras (velo + textura de nariz)
+     se recortan a `padding-box` y tapan el interior; la tercera (textura de
+     caracal) se recorta a `border-box` y por eso sólo asoma en el anillo del
+     borde. El borde va TRANSPARENTE: si llevara color sólido se pintaría
+     ENCIMA del fondo y la textura no se vería. `border-radius` redondea el
+     anillo, cosa que `border-image` no hace. */
+  border: 3px solid transparent;
+  background-origin: padding-box, padding-box, border-box;
+  background-clip: padding-box, padding-box, border-box;
+  background-repeat: no-repeat, no-repeat, no-repeat;
+  background-size: cover, cover, cover;
+  background-position: center, center, center;
+  background-image:
+    linear-gradient(rgba(8, 8, 9, var(--tex-velo)), rgba(8, 8, 9, var(--tex-velo))),
+    url("{% static 'assets/textura-floppa.jpg' %}"),
+    url("{% static 'assets/textura-caracal.webp' %}");
+  color: var(--caracal-arena-clr);
   font-weight: 600;
   padding: 0.78rem 1.6rem;
   border-radius: 9999px;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: filter 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
 }
 .btn-outline-floppa:hover,
 .btn-outline-floppa:focus {
-  background: rgba(251, 191, 36, 0.12);
-  border-color: #fbbf24;
-  color: #fbbf24;
+  /* El velo se aclara con filter: así la textura se conserva en hover */
+  filter: brightness(1.45);
+  /* Sigue siendo textura (no color): sólo se aclara con el filter */
+  border-color: transparent;
+  color: var(--caracal-naranja);
 }
 
-/* Insignia de categoría (ámbar, sin azul) */
-.category-badge {
+/* Variante con textura de CÉSPED (cesped textura.webp), pedida por el
+   usuario para el botón "Ver todo el catálogo". Va después de la regla
+   base para ganar en orden de fuente con la misma especificidad.
+   El borde es CAFÉ (no naranja) porque el naranja no combinaba con el
+   verde de la textura. */
+.btn-cesped {
+  /* Velo bajo para que la textura de césped NO se vea opaca */
+  --tex-velo: 0.26;
+  border-color: var(--caracal-cafe-med);
+  background-image:
+    linear-gradient(rgba(8, 8, 9, var(--tex-velo)), rgba(8, 8, 9, var(--tex-velo))),
+    url("{% static 'assets/textura-cesped.webp' %}");
+  /* Textura a tamaño nativo y repetida: así sale nítida (cover la escalaba) */
+  background-repeat: repeat, repeat;
+  background-size: auto, auto;
+  background-position: center, center;
+}
+.btn-cesped:hover,
+.btn-cesped:focus {
+  border-color: var(--caracal-arena);
+  color: var(--caracal-arena-clr);
+}
+
+/* Birrete con diploma (sombrero.png, entregado por el usuario): va a la
+   derecha de "2026" dentro de la insignia del hero. Se alinea ópticamente
+   con la línea de texto y crece un poco en pantallas grandes. */
+.ico-sombrero {
   display: inline-block;
-  background: rgba(251, 191, 36, 0.14);
-  border: 1px solid rgba(251, 191, 36, 0.32);
-  color: #fcd34d;
-  padding: 0.35rem 0.85rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  width: 1.85rem;
+  height: auto;
+  vertical-align: -0.78rem;
+  margin-left: 0.4rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.55));
 }
+@media (min-width: 768px) { .ico-sombrero { width: 2.2rem; vertical-align: -0.92rem; } }
 
-/* Insignia de disponibilidad de cupos */
+/* Insignia de categoría: ahora vive en static/css/estilos.css para que
+   funcione en todas las páginas (el home y /nuestra-historia/ la usan). */
+
+/* Insignia de cupos — DISEÑO NUEVO.
+   Antes era texto plano con un check genérico. Ahora: cristal oscuro con
+   halo, indicador con brillo pulsante y una barra corta de aforo que muestra
+   de un vistazo cuántos cupos quedan respecto del máximo. */
 .availability-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  background: rgba(12, 12, 14, 0.88);
-  padding: 0.35rem 0.75rem;
+  gap: 0.45rem;
+  padding: 0.4rem 0.78rem 0.4rem 1.9rem;
   border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--caracal-crema);
+  /* Textura de matrícula entregada por el usuario (matricula textura.jpeg):
+     es un PIZARRÓN con marco de madera. Antes se veía "opaca" porque el
+     fondo se recortaba al centro verde y encima llevaba un velo negro.
+     Ahora: SIN velo y con `auto 100%` para que entre el marco de madera
+     completo (arriba y abajo) y se reconozca el pizarrón de un vistazo. */
+  background-color: #16301f;
+  background-image: url("{% static 'assets/textura-matricula.jpg' %}?v=2");
+  background-repeat: repeat;
+  background-size: auto 100%;
+  background-position: left center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 8px 20px -12px rgba(0, 0, 0, 0.95),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
-.availability-badge.available   { color: #86efac; border: 1px solid rgba(34, 197, 94, 0.45); }
-.availability-badge.unavailable { color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.45); }
+/* Icono de cupo: es un TICKET (cupo.png, entregado por el usuario). Está
+   POSICIONADO FUERA DEL FLUJO para que la píldora NO crezca con la imagen:
+   el alto lo define sólo el texto y el ticket sobresale hacia afuera. */
+.availability-badge .cupos-dot {
+  position: absolute;
+  left: -3.2rem;
+  top: 50%;
+  width: 5.5rem;
+  height: 5.5rem;
+  margin: 0;
+  object-fit: contain;
+  transform: translateY(-50%) rotate(-26deg);
+  filter:
+    drop-shadow(0 2px 5px rgba(0, 0, 0, 0.8))
+    drop-shadow(0 0 2px rgba(255, 255, 255, 0.55));
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+.availability-badge:hover .cupos-dot { transform: translateY(-50%) rotate(-14deg) scale(1.05); }
+.availability-badge.available {
+  color: var(--caracal-crema);
+  border-color: rgba(110, 231, 168, 0.45);
+}
+.availability-badge.available .cupos-dot {
+  animation: pulse 2s ease-in-out infinite;
+}
+.availability-badge.unavailable {
+  color: #fecaca;
+  border-color: rgba(248, 113, 113, 0.45);
+}
+/* Barra de aforo (relleno = cupos que quedan) */
+.cupos-bar {
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+  flex: none;
+}
+.cupos-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--caracal-arena), var(--caracal-naranja));
+}
+.availability-badge.unavailable .cupos-bar > i {
+  background: linear-gradient(90deg, #f87171, #b91c1c);
+}
 
-/* Tarjetas de características (panel sólido, sin cristal) */
-.feature-card { padding: 1.5rem; height: 100%; transition: transform 0.25s ease; }
+/* Tarjetas de características: panel sólido con la TEXTURA DE MADERA que pidió
+   el usuario por debajo del texto (static/assets/textura-madera.jpg). Se deja
+   una capa oscura encima para que el texto blanco conserve contraste AA. */
+.feature-card {
+  position: relative;
+  padding: 1.75rem;
+  height: 100%;
+  transition: transform 0.25s ease;
+  background-color: #14100d;
+  background-image:
+    linear-gradient(rgba(9, 8, 7, 0.72), rgba(9, 8, 7, 0.72)),
+    url("{% static 'assets/textura-madera.jpg' %}");
+  background-size: cover;
+  background-position: center;
+}
 .feature-card:hover { transform: translateY(-4px); }
-.feature-card .icon-slot {
-  width: 54px;
-  height: 54px;
-  border-radius: 14px;
-  margin-bottom: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-size: 1.5rem;
+
+/* ---------- 11b. "Dato curioso" al hacer clic en las tarjetas ----------
+   El usuario pidió que las tarjetas hagan algo al clickearlas. Al hacerlo (o
+   con Enter/Espacio, para accesibilidad) la tarjeta gira con una animación y
+   aparece una capa con un dato curioso de los caracales. Volver a hacer clic
+   la cierra. */
+.feature-card[role="button"] { cursor: pointer; }
+.feature-card[role="button"]:focus-visible {
+  outline: 3px solid var(--caracal-arena);
+  outline-offset: 3px;
+}
+/* Animación de "giro" al abrir/cerrar el dato */
+.feature-card.gira { animation: featureDato 0.55s cubic-bezier(0.16, 0.84, 0.44, 1); }
+@keyframes featureDato {
+  0%   { transform: perspective(900px) rotateY(0deg) scale(1); }
+  45%  { transform: perspective(900px) rotateY(-9deg) scale(1.045); }
+  100% { transform: perspective(900px) rotateY(0deg) scale(1); }
+}
+/* Pista discreta de que la tarjeta es clicable */
+.fc-hint {
+  display: block;
+  margin-top: 1.05rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--caracal-arena-clr);
+  opacity: 0.7;
+}
+/* Capa con el dato curioso: entra girando desde la izquierda */
+.fc-dato {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 1.5rem;
+  border-radius: inherit;
+  background-image:
+    linear-gradient(rgba(11, 9, 8, 0.95), rgba(11, 9, 8, 0.95)),
+    url("{% static 'assets/textura-madera.jpg' %}");
+  background-size: cover;
+  background-position: center;
+  border: 2px solid var(--caracal-arena);
+  color: var(--caracal-crema);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(8%) rotateY(-16deg);
+  transform-origin: left center;
+  transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.16, 0.84, 0.44, 1),
+              visibility 0s linear 0.45s;
+}
+.feature-card.activo .fc-dato {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.35s ease 0.1s, transform 0.45s cubic-bezier(0.16, 0.84, 0.44, 1),
+              visibility 0s linear;
+}
+.fc-dato-titulo {
+  font-family: 'Bangers', 'Poppins', cursive;
+  font-weight: 400;
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+  color: var(--caracal-arena-clr);
+}
+.fc-dato-texto { margin: 0; font-size: 0.94rem; line-height: 1.65; }
+.fc-dato-cerrar {
+  margin-top: 0.35rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.5);
+}
+/* Con movimiento reducido: se muestra sin girar */
+@media (prefers-reduced-motion: reduce) {
+  .feature-card.gira { animation: none; }
+  .fc-dato { transform: none; }
 }
 
-/* Tintes neutros/cálidos para las ranuras de icono (sin azul/violeta) */
-.tone-amber { background: rgba(251, 191, 36, 0.13); }
-.tone-sand  { background: rgba(217, 169, 106, 0.13); }
-.tone-red   { background: rgba(239, 68, 68, 0.13); }
-.tone-green { background: rgba(74, 222, 128, 0.13); }
+/* Ranura del icono de las características: SIN cuadro de color detrás
+   (el usuario indicó que los rellenos verde/ámbar/rojo/arena "se ven feos")
+   y a mayor tamaño para que el icono imponga más. */
+.feature-card .icon-slot {
+  width: 84px;
+  height: 84px;
+  margin-bottom: 1rem;
+  font-size: 2rem;
+}
+
+/* Nota histórica: existían aquí las clases .tone-amber / .tone-sand /
+   .tone-red / .tone-green (rellenos de color a muy baja opacidad detrás de
+   los iconos). Se eliminaron junto a sus claves `icon_bg` en
+   apps/core/views.py a petición del usuario. */
 
 /* ---------- 11. Tarjetas de estadísticas ---------- */
-/* Diseño sobrio: icono circular + número + etiqueta en versalitas */
+/* Diseño sobrio: icono grande + número + etiqueta en versalitas.
+   Fondo con la TEXTURA DE PAPEL que pidió el usuario
+   (static/assets/textura-papel.jpg) bajo una capa oscura, para que el texto
+   claro conserve el contraste AA sobre papel tan claro. */
 .stat-card {
   position: relative;
   height: 100%;
   padding: 1.75rem 1.25rem;
   text-align: center;
+  background-color: #14110e;
+  background-image:
+    linear-gradient(rgba(12, 11, 10, 0.60), rgba(12, 11, 10, 0.60)),
+    url("{% static 'assets/textura-papel.jpg' %}");
+  background-size: cover;
+  background-position: center;
 }
 .stat-card .icon-slot {
-  width: 60px;
-  height: 60px;
+  width: 96px;
+  height: 96px;
   margin: 0 auto 1.1rem;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 1.7rem;
+  font-size: 2rem;
 }
 .stat-number {
+  font-family: 'Luckiest Guy', 'Poppins', cursive;
+  font-weight: 400;             /* evita el falso negrita sobre la fuente */
   font-size: 2.5rem;
-  font-weight: 800;
   line-height: 1;
-  color: #fbbf24;
+  color: var(--caracal-naranja);
   letter-spacing: -0.02em;
 }
 .stat-label {
@@ -363,13 +736,17 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #a8a29e;
+  /* La textura de papel del fondo se aclaró, así que el texto se aclara con
+     ella para conservar el contraste AA (WCAG 1.4.3) sobre papel claro. */
+  color: rgba(255, 255, 255, 0.94);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
 }
 .stat-desc {
   margin: 0.55rem 0 0;
   font-size: 0.8rem;
   line-height: 1.5;
-  color: #78716c;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.75);
 }
 
 /* Rejilla de cursos destacados */
@@ -377,31 +754,198 @@
 @media (min-width: 640px)  { .course-grid { grid-template-columns: repeat(2, 1fr); } }
 @media (min-width: 1024px) { .course-grid { grid-template-columns: repeat(3, 1fr); } }
 
-/* Bloque final de llamada a la acción */
+/* Bloque final de llamada a la acción: textura de nariz a sangre completa */
 .cta-section {
-  /* Base sólida: la foto de fondo no debe atravesar el bloque */
-  background-color: rgba(12, 12, 14, 0.94);
-  background-image: linear-gradient(
-    135deg,
-    rgba(251, 191, 36, 0.16) 0%,
-    rgba(245, 158, 11, 0.10) 100%
-  );
-  border: 1px solid rgba(251, 191, 36, 0.28);
+  /* Base opaca: la foto de fondo no debe atravesar el bloque */
+  --tex-velo: 0.80;
+  background-color: #0b0b0c;
+  background-image:
+    linear-gradient(rgba(8, 8, 9, var(--tex-velo)), rgba(8, 8, 9, var(--tex-velo))),
+    url("{% static 'assets/textura-floppa.jpg' %}");
+  background-size: cover;
+  background-position: center;
+  border: 1px solid rgba(224, 128, 56, 0.35);
   border-radius: 1.6rem;
   padding: 3rem 1.5rem;
 }
 @media (min-width: 768px) { .cta-section { padding: 3.5rem 3rem; } }
 
+/* Flecha roja (icono del usuario) del botón "Ver todo el catálogo":
+   grande y con un vaivén sutil para invitar al clic. */
+.flecha-roja {
+  width: auto;
+  height: 2.8rem;
+  flex-shrink: 0;
+  animation: flechaAvance 1.4s ease-in-out infinite;
+  filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.65));
+}
+@keyframes flechaAvance {
+  0%, 100% { transform: translateX(0); }
+  55%      { transform: translateX(9px); }
+}
+
+/* ---------- 12b. Sello "FEATURED" del badge DESTACADOS ---------- */
+/* Sello de goma verde entregado por el usuario (comprobado.png). Se fija a un
+   tamaño chico y ligeramente torcido para que lea como un tampón y no como
+   un logo gigante (sin esta regla toma sus 512 px originales). */
+.sello-destacado {
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  object-fit: contain;
+  transform: rotate(-9deg);
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6));
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.d-flex > .sello-destacado:hover { transform: rotate(-2deg) scale(1.1); }
+@media (min-width: 768px) { .sello-destacado { width: 3.6rem; height: 3.6rem; } }
+
+/* ---------- 13. Modal de detalle de curso ---------- */
+/* Se abre al hacer clic en cualquier parte de la tarjeta del curso: el usuario
+   pidió una "animación que muestre un cuadrado con la info detallada" y que se
+   pueda cerrar con la equis (botón × nativo de Bootstrap). */
+.modal-floppa .modal-content {
+  background: #121214;
+  color: var(--caracal-crema);
+  border: 1px solid rgba(224, 128, 56, 0.4);
+  border-radius: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.95);
+}
+.modal-floppa .modal-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1.05rem 1.4rem;
+}
+.modal-floppa .modal-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1rem 1.4rem;
+  gap: 0.75rem;
+}
+.modal-floppa .modal-body { padding: 1.4rem; }
+.modal-floppa .btn-close { filter: invert(1) grayscale(1) brightness(2); opacity: .8; }
+.modal-floppa .btn-close:hover { opacity: 1; }
+
+/* Animación de entrada (escala + desvanecido) */
+.modal.show .modal-dialog { animation: modalIn 0.38s cubic-bezier(0.16, 0.84, 0.44, 1); }
+@keyframes modalIn {
+  from { transform: translateY(-24px) scale(0.94); opacity: 0; }
+  to   { transform: translateY(0) scale(1);        opacity: 1; }
+}
+
+/* Piezas internas del modal */
+.mc-media {
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: #0d0d0e;
+  aspect-ratio: 16 / 9;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.mc-media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mc-titulo {
+  font-family: 'Luckiest Guy', 'Poppins', cursive;
+  font-weight: 400;
+  font-size: 1.45rem;
+  line-height: 1.2;
+  color: var(--caracal-crema);
+}
+.mc-desc { color: rgba(255, 255, 255, 0.85); line-height: 1.7; }
+.mc-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.72rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--caracal-arena-clr);
+}
+/* Icono de imagen dentro de una píldora (el hacha de Caza entregada por el
+   usuario). Sustituye al emoji cuando el área tiene archivo en static/. */
+.mc-ico-area {
+  width: 1.15rem;
+  height: 1.15rem;
+  object-fit: contain;
+  flex: none;
+}
+.mc-fila {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  align-items: baseline;
+  padding: 0.62rem 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+}
+.mc-fila:last-child { border-bottom: 0; }
+.mc-k {
+  min-width: 9.5rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.mc-v { font-weight: 600; color: var(--caracal-crema); }
+.mc-cargando { text-align: center; padding: 2.5rem 0; color: rgba(255, 255, 255, 0.6); }
+.mc-error { color: #fca5a5; text-align: center; padding: 2rem 0; }
+/* Barra de aforo ampliada dentro del modal */
+.modal-floppa .cupos-bar { width: 100%; height: 7px; background: rgba(255, 255, 255, 0.14); }
+
+/* ---------- 14. Banda "Nuestra historia / lucha contra el plagio" ---------- */
+/* Botón-titular ENORME en tipografía única (Alfa Slab One), blanco, que lleva
+   a la subpágina con el manifiesto de origen y la denuncia de plagio. */
+.banda-plagio {
+  display: block;
+  text-decoration: none;
+  text-align: center;
+  padding: clamp(2.2rem, 5vw, 3.8rem) 1.5rem;
+  border-radius: 1.5rem;
+  background: rgba(8, 8, 9, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 26px 60px -35px rgba(0, 0, 0, 0.95);
+  transition: transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+}
+.banda-plagio:hover,
+.banda-plagio:focus {
+  transform: translateY(-4px);
+  background: rgba(8, 8, 9, 0.74);
+  border-color: var(--caracal-arena);
+  text-decoration: none;
+}
+.banda-plagio-titulo {
+  display: block;
+  font-family: 'Alfa Slab One', 'Poppins', serif;
+  font-weight: 400;
+  color: #ffffff;
+  font-size: clamp(1.7rem, 5vw, 3.7rem);
+  line-height: 1.07;
+  letter-spacing: 0.005em;
+  text-shadow: 0 8px 30px rgba(0, 0, 0, 0.9);
+}
+.banda-plagio-sub {
+  display: block;
+  margin-top: 1rem;
+  font-family: 'Alfa Slab One', 'Poppins', serif;
+  font-weight: 400;
+  color: #ffffff;
+  font-size: clamp(0.95rem, 2.3vw, 1.5rem);
+  line-height: 1.3;
+  text-decoration: underline;
+  text-underline-offset: 0.32em;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, 0.9);
+}
+.banda-plagio:hover .banda-plagio-sub { color: var(--caracal-arena-clr); }
+
 /* Accesibilidad: respeta la preferencia del usuario de reducir movimiento */
 @media (prefers-reduced-motion: reduce) {
-  .stat-card, .pulse { animation: none; opacity: 1; }
+  .stat-card, .pulse, .flecha-roja, .cupos-dot { animation: none; opacity: 1; }
   .reveal { opacity: 1; transform: none; transition: none; }
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="home-container mx-auto px-3">
+<div class="home-container mx-auto">
 
   <!-- ===== HERO ===== -->
   <section class="home-hero d-flex align-items-center justify-content-center position-relative overflow-hidden text-center text-md-start">
@@ -416,16 +960,26 @@
       <div class="mw-4xl mx-auto mx-md-0">
         <!-- Insignia -->
         <div class="d-inline-flex align-items-center gap-2 chip-panel px-3 py-2 rounded-pill mb-4 reveal">
-          <span class="d-inline-block bg-warning rounded-circle pulse" style="width: 8px; height: 8px;"></span>
-          <span class="small fw-medium txt-amber-300">Academia Oficial • Matrícula Abierta 2026</span>
+          {# Punto de la insignia: nariz de Floppa (punto-floppa.png) con .pulse #}
+          <img class="badge-dot pulse" src="{% static 'assets/iconos/punto-floppa.png' %}" alt="" aria-hidden="true">
+          <span class="small fw-medium txt-amber-300">Academia Oficial • Matrícula Abierta 2026<img class="ico-sombrero" src="{% static 'assets/iconos/sombrero.png' %}" alt="Birrete de graduación" title="Matrícula abierta"></span>
         </div>
 
-        <!-- Título principal -->
-        <h1 class="t-hero fw-bold lh-tight mb-4 reveal">
-          {{ TEMATICA.nombre_sistema }}
-          <br>
-          <span class="gradient-text">Entrenamiento de Élite</span>
-        </h1>
+        <!-- Título principal + botón-imagen de la nariz a su derecha -->
+        <div class="d-flex align-items-center gap-3 gap-md-4 flex-wrap mb-4 reveal">
+          <h1 class="t-hero fw-bold lh-tight mb-0 flex-shrink-1" style="min-width: min(100%, 14rem);">
+            {{ TEMATICA.nombre_sistema }}
+            <br>
+            <span class="gradient-text">Entrenamiento de Élite</span>
+          </h1>
+
+          <!-- Botón-imagen: nariz de Floppa (restaurado del prototipo) -->
+          <a href="{% if user.is_authenticated %}{% url 'catalogo' %}{% else %}{% url 'registro' %}{% endif %}"
+             class="btn-imagen-link flex-shrink-0"
+             title="{% if user.is_authenticated %}Ver el catálogo{% else %}Unirse a la academia{% endif %}">
+            <img src="{% static 'assets/boton-nuevo-socio.png' %}?v=2" alt="Nariz de Floppa - únete a la academia" class="btn-nariz">
+          </a>
+        </div>
 
         <!-- Bajada -->
         <p class="txt-300 mb-4 reveal" style="font-size: 1.1rem;">
@@ -462,25 +1016,17 @@
         <!-- Indicadores de confianza -->
         <div class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-start gap-4 mt-4 txt-500 reveal">
           <span class="d-inline-flex align-items-center gap-2 small">
-            <svg class="ico-16 txt-amber-400" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <img class="ico-indicador" src="{% static 'assets/iconos/certificado.png' %}" alt="" aria-hidden="true">
             Certificación Oficial Floppa
           </span>
           <span class="d-inline-flex align-items-center gap-2 small">
-            <svg class="ico-16 txt-sand" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <img class="ico-indicador" src="{% static 'assets/iconos/vitalicio.png' %}" alt="" aria-hidden="true">
             Acceso Vitalicio
           </span>
           <span class="d-inline-flex align-items-center gap-2 small">
-            <svg class="ico-16 txt-green-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+            <img class="ico-indicador" src="{% static 'assets/iconos/privada.png' %}" alt="" aria-hidden="true">
             Comunidad Privada
           </span>
-        </div>
-
-        <!-- Botón-imagen: nariz de Floppa (restaurado del prototipo) -->
-        <div class="mt-4 reveal">
-          <a href="{% if user.is_authenticated %}{% url 'catalogo' %}{% else %}{% url 'registro' %}{% endif %}"
-             class="btn-imagen-link" title="{% if user.is_authenticated %}Ver el catálogo{% else %}Unirse a la academia{% endif %}">
-            <img src="{% static 'assets/boton-nuevo-socio.png' %}?v=2" alt="Nariz de Floppa - únete a la academia" class="btn-nariz">
-          </a>
         </div>
       </div>
 
@@ -496,7 +1042,7 @@
     <div class="text-center mb-5 reveal">
       <span class="category-badge mb-3">¿Por qué elegirnos?</span>
       <h2 class="t-h2 fw-bold mb-3">
-        La academia <span class="gradient-text">más completa</span> para caracales
+        La academia <span class="gradient-text" data-text="más completa">más completa</span> para caracales
       </h2>
       <p class="txt-400 mw-2xl mx-auto mb-0">
         Metodología probada, instructores legendarios y una comunidad que ruge junta.
@@ -506,10 +1052,13 @@
     <div class="row g-4">
       {% for feature in features %}
       <div class="col-12 col-md-6 col-lg-3">
-        <div class="feature-card panel-card rad-md p-4 h-100 reveal" style="animation-delay: {{ forloop.counter0|add:'0.1' }}s;">
+        {# Tarjeta clicable: al hacer clic se anima y muestra un dato curioso #}
+        <div class="feature-card panel-card rad-md p-4 h-100 reveal"
+             style="animation-delay: {{ forloop.counter0|add:'0.1' }}s;"
+             role="button" tabindex="0" aria-expanded="false" data-feature>
           {# Icono: imagen subida por el usuario, si no existe usa el emoji #}
           {% static_exists feature.icono_img as hay_icono %}
-          <div class="icon-slot {{ feature.icon_bg }}">
+          <div class="icon-slot">
             {% if hay_icono %}
               <img src="{% static feature.icono_img %}" alt="">
             {% else %}
@@ -518,6 +1067,13 @@
           </div>
           <h3 class="t-h3 fw-bold mb-2">{{ feature.title }}</h3>
           <p class="txt-400 mb-0">{{ feature.description }}</p>
+          <span class="fc-hint">Toca para el dato curioso</span>
+          {# Capa con el dato curioso de caracales (se revela con animación) #}
+          <div class="fc-dato" aria-hidden="true">
+            <span class="fc-dato-titulo">Dato curioso del caracal</span>
+            <p class="fc-dato-texto">{{ feature.dato }}</p>
+            <span class="fc-dato-cerrar">Toca de nuevo para volver</span>
+          </div>
         </div>
       </div>
       {% endfor %}
@@ -528,23 +1084,31 @@
   <section class="home-section bg-veil">
     <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-between gap-3 mb-4 reveal">
       <div>
-        <span class="category-badge mb-3">Destacados</span>
+        {# Sello de sección + sello "FEATURED" entregado por el usuario #}
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <span class="category-badge mb-0">Destacados</span>
+          <img class="sello-destacado" src="{% static 'assets/iconos/comprobado.png' %}"
+               alt="Destacado" title="Destacado">
+        </div>
         <h2 class="t-h2 fw-bold mb-0">
-          Cursos <span class="gradient-text">más populares</span>
+          Cursos <span class="gradient-text" data-text="más populares">más populares</span>
         </h2>
       </div>
-      <a href="{% url 'catalogo' %}" class="btn-outline-floppa align-self-md-end text-nowrap">
+      {# Sube respecto de la línea base: antes quedaba al ras del borde inferior #}
+      <a href="{% url 'catalogo' %}" class="btn-outline-floppa btn-cesped align-self-md-center text-nowrap">
         Ver todo el catálogo
-        <svg class="ico-20" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-        </svg>
+        {# Flecha roja entregada por el usuario, grande y con vaivén sutil #}
+        <img class="flecha-roja" src="{% static 'assets/iconos/flecha-roja.png' %}" alt="" aria-hidden="true">
       </a>
     </div>
 
     {% if cursos_destacados %}
     <div class="course-grid" id="cursos-destacados">
       {% for curso in cursos_destacados %}
-      <article class="course-card panel-card rad-lg overflow-hidden reveal" style="animation-delay: {{ forloop.counter0|add:'0.05' }}s;">
+      <article class="course-card panel-card rad-lg overflow-hidden reveal"
+               data-curso-id="{{ curso.id }}" tabindex="0"
+               aria-label="Ver detalle de {{ curso.nombre }}"
+               style="animation-delay: {{ forloop.counter0|add:'0.05' }}s;">
         <!-- Imagen del curso -->
         <div class="card-media">
           {% if curso.imagen %}
@@ -563,14 +1127,17 @@
           <!-- Categoría -->
           <span class="category-badge position-absolute top-0 start-0 ms-3 mt-3">{{ curso.area.nombre }}</span>
           <!-- Disponibilidad -->
-          <span class="availability-badge position-absolute top-0 end-0 me-3 mt-3 {% if curso.esta_disponible %}available{% else %}unavailable{% endif %}">
+          <span class="availability-badge position-absolute top-0 end-0 me-3 mt-4 {% if curso.esta_disponible %}available{% else %}unavailable{% endif %}">
+            {# Icono de cupo entregado por el usuario (cupo.png), agrandado #}
+            <img class="cupos-dot" src="{% static 'assets/iconos/cupo.png' %}" alt="" aria-hidden="true">
             {% if curso.esta_disponible %}
-              <svg class="ico-12" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
               {{ curso.cupos_disponibles }} cupos
             {% else %}
-              <svg class="ico-12" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
               Agotado
             {% endif %}
+            {# Barra de aforo: cupos restantes / cupos maximos (0..100) #}
+            {% widthratio curso.cupos_disponibles curso.cupos_maximos 100 as pct_cupos %}
+            <span class="cupos-bar" aria-hidden="true"><i style="width: {{ pct_cupos|default:0 }}%"></i></span>
           </span>
         </div>
 
@@ -593,7 +1160,8 @@
 
           <!-- Precio y acción -->
           <div class="d-flex align-items-center justify-content-between pt-3 b-top-glass">
-            <span class="fs-4 fw-bold gradient-text">CLP {{ curso.precio|floatformat:0 }}</span>
+            {# Precio en formato chileno: punto de millar + billete (filtro `clp`) #}
+            <span class="fs-4 fw-bold gradient-text">CLP {{ curso.precio|clp }}<img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></span>
             {% if user.is_authenticated and user.es_estudiante %}
               <button class="btn-primary-floppa btn-agregar-carro px-3 py-2 small"
                       data-curso-id="{{ curso.id }}"
@@ -627,11 +1195,20 @@
     {% endif %}
   </section>
 
+  <!-- ===== BANDA: NUESTRA HISTORIA Y LUCHA CONTRA EL PLAGIO ===== -->
+  <!-- Titular enorme y clicable que lleva a /nuestra-historia/ -->
+  <section class="home-section">
+    <a class="banda-plagio reveal" href="{% url 'nuestra_historia' %}">
+      <span class="banda-plagio-titulo">Nuestra historia y nuestra lucha contra el plagio</span>
+      <span class="banda-plagio-sub">Otra razón para matricularte. ¡Haz clic aquí!</span>
+    </a>
+  </section>
+
   <!-- ===== ESTADÍSTICAS ===== -->
   <section class="home-section bg-soft" id="estadisticas">
     <div class="text-center mb-5 reveal">
       <span class="category-badge mb-3">La academia en números</span>
-      <h2 class="t-h2 fw-bold mb-0">Cifras <span class="gradient-text">reales</span> de nuestra manada</h2>
+      <h2 class="t-h2 fw-bold mb-0">Cifras <span class="gradient-text" data-text="reales">reales</span> de nuestra manada</h2>
     </div>
 
     <div class="row g-4">
@@ -640,7 +1217,7 @@
         {# Card rediseñada: panel sólido neutro, sin cristal ni azules #}
         {% static_exists stat.icono_img as hay_icono %}
         <div class="stat-card panel-card rad-lg reveal" style="animation-delay: {{ forloop.counter0|add:'0.1' }}s;">
-          <div class="icon-slot {{ stat.icon_bg }}">
+          <div class="icon-slot">
             {% if hay_icono %}
               <img src="{% static stat.icono_img %}" alt="">
             {% else %}
@@ -662,7 +1239,7 @@
       <div class="mw-2xl mx-auto">
         <span class="category-badge mb-3">¿Listo para comenzar?</span>
         <h2 class="t-h2 fw-bold mb-3">
-          Únete a más de <span class="gradient-text">{{ stats.total_estudiantes|add:stats.total_estudiantes }}</span> estudiantes felinos
+          Únete a más de <span class="gradient-text" data-text="{{ stats.total_estudiantes|add:stats.total_estudiantes }}">{{ stats.total_estudiantes|add:stats.total_estudiantes }}</span> estudiantes felinos
         </h2>
         <p class="txt-300 mb-4" style="font-size: 1.05rem;">
           Tu viaje hacia la maestría felina comienza aquí. Matrícula abierta, cupos limitados.
@@ -684,6 +1261,38 @@
       </div>
     </div>
   </section>
+
+  <!-- ===== MODAL DE DETALLE DEL CURSO ===== -->
+  <!-- Se abre con un clic sobre la tarjeta. La "x" del encabezado lo cierra
+       (botón nativo de Bootstrap) y la animación de entrada está en el CSS. -->
+  <div class="modal fade modal-floppa" id="modalDetalleCurso" tabindex="-1"
+       aria-labelledby="modalDetalleCursoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="category-badge mb-0" id="mc-area">Curso</span>
+            <h5 class="modal-title fw-bold mb-0" id="modalDetalleCursoLabel">Detalle del curso</h5>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body" id="mc-cuerpo">
+          <div class="mc-cargando">Cargando detalle…</div>
+        </div>
+        <div class="modal-footer justify-content-between" id="mc-pie" hidden>
+          <span class="fs-5 fw-bold gradient-text" id="mc-precio"></span>
+          <div class="d-flex flex-wrap gap-2">
+            <button type="button" class="btn-outline-floppa" data-bs-dismiss="modal">Cerrar</button>
+            {% if user.is_authenticated %}
+            <a href="#" class="btn-primary-floppa btn-agregar-carro" id="mc-accion" data-curso-id="">Agregar al carro</a>
+            {% else %}
+            <a href="{% url 'login' %}" class="btn-primary-floppa" id="mc-accion">Inicia sesión para matricularte</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
 </div>
 {% endblock %}
@@ -789,6 +1398,131 @@ $(document).ready(function() {
         btn.html(originalText).prop('disabled', false);
       }
     });
+  });
+
+  /* ================================================================
+     MODAL DE DETALLE DEL CURSO
+     Clic (o Enter) sobre una tarjeta -> pide el detalle al API público
+     /api/catalogo/cursos/<id>/ y lo pinta dentro del modal.
+     ================================================================ */
+  function esc(txt) {
+    return $('<div/>').text(txt == null ? '' : txt).html();
+  }
+
+  function modalidadTxt(m) {
+    const mapa = { PRESENCIAL: 'Presencial', VIRTUAL: 'Virtual', HIBRIDO: 'Híbrido (mixto)' };
+    if (!m) return '';
+    return mapa[m] || m.charAt(0) + m.slice(1).toLowerCase();
+  }
+
+  // Icono del área: usa la IMAGEN entregada por el usuario (el hacha de Caza)
+  // si el backend la envía; si no existe la imagen, el emoji del área.
+  function iconoAreaHTML(d) {
+    if (d.area_icono_img) {
+      return '<img class="mc-ico-area" src="/static/' + esc(d.area_icono_img) +
+             '" alt="" aria-hidden="true">';
+    }
+    return esc(d.area_icono || '');
+  }
+
+  function filaDetalle(k, v) {
+    if (v === null || v === undefined || v === '') return '';
+    return '<div class="mc-fila"><span class="mc-k">' + esc(k) +
+           '</span><span class="mc-v">' + v + '</span></div>';
+  }
+
+  function pintarDetalle(d) {
+    const img = d.imagen_url
+      ? '<div class="mc-media mb-3"><img src="' + esc(d.imagen_url) + '" alt="' + esc(d.nombre) + '"></div>'
+      : '';
+    const max = d.cupos_maximos || 0;
+    const pct = max > 0 ? Math.round((d.cupos_ocupados || 0) / max * 100) : 0;
+    const prereq = (d.prerequisitos || []).map(function (p) { return p.nombre; }).join(', ');
+
+    $('#mc-area').text(d.area_nombre || 'Curso');
+
+    $('#mc-cuerpo').html(
+      '<div class="row g-4">' +
+        '<div class="col-12 col-md-5">' +
+          img +
+          '<div class="d-flex justify-content-between align-items-center mb-1 small txt-400">' +
+            '<span>Cupos disponibles</span>' +
+            '<strong class="txt-amber-300">' + (d.cupos_disponibles || 0) + ' / ' + max + '</strong>' +
+          '</div>' +
+          '<div class="cupos-bar"><i style="width: ' + pct + '%"></i></div>' +
+        '</div>' +
+        '<div class="col-12 col-md-7">' +
+          '<div class="d-flex flex-wrap gap-2 mb-2">' +
+            '<span class="mc-pill">' + iconoAreaHTML(d) + ' ' + esc(d.area_nombre || '') + '</span>' +
+            '<span class="mc-pill">' + esc(modalidadTxt(d.modalidad)) + '</span>' +
+            '<span class="mc-pill">' + esc(d.codigo || '') + '</span>' +
+          '</div>' +
+          '<h4 class="mc-titulo mb-2">' + esc(d.nombre) + '</h4>' +
+          '<p class="mc-desc">' + esc(d.descripcion || d.resumen || '') + '</p>' +
+          filaDetalle('Coordinador', esc(d.coordinador_nombre) || 'Equipo Floppa') +
+          filaDetalle('Fecha de inicio', esc(d.fecha_inicio)) +
+          filaDetalle('Fecha de término', esc(d.fecha_fin)) +
+          filaDetalle('Límite de inscripción', esc(d.fecha_limite_inscripcion)) +
+          filaDetalle('Prerrequisitos', esc(prereq) || 'Ninguno') +
+        '</div>' +
+      '</div>'
+    );
+
+    $('#mc-precio').html(window.precioHTML(d.precio));
+    $('#mc-accion').attr('data-curso-id', d.id);
+    $('#mc-pie').prop('hidden', false);
+  }
+
+  function abrirDetalleCurso(id) {
+    const el = document.getElementById('modalDetalleCurso');
+    $('#mc-cuerpo').html('<div class="mc-cargando">Cargando detalle…</div>');
+    $('#mc-pie').prop('hidden', true);
+    bootstrap.Modal.getOrCreateInstance(el).show();
+
+    $.getJSON('/api/catalogo/cursos/' + id + '/')
+      .done(pintarDetalle)
+      .fail(function () {
+        $('#mc-cuerpo').html('<p class="mc-error">No se pudo cargar el detalle del curso. Inténtalo de nuevo.</p>');
+      });
+  }
+
+  // Tarjetas de características: al hacer clic (o con Enter/Espacio) se animan
+  // y muestran un dato curioso de los caracales. La misma pulsación las cierra.
+  function alternarDatoFeature(card) {
+    var capa = card.querySelector('.fc-dato');
+    if (!capa) return;
+    var abierto = card.classList.toggle('activo');
+    card.setAttribute('aria-expanded', abierto ? 'true' : 'false');
+    capa.setAttribute('aria-hidden', abierto ? 'false' : 'true');
+    // Se reinicia la clase para que la animación de giro vuelva a reproducirse
+    card.classList.remove('gira');
+    void card.offsetWidth;
+    card.classList.add('gira');
+  }
+  $(document).on('click', '[data-feature]', function (e) {
+    e.preventDefault();
+    alternarDatoFeature(this);
+  });
+  $(document).on('keydown', '[data-feature]', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    alternarDatoFeature(this);
+  });
+
+  // Clic sobre la tarjeta (si es sobre un botón o enlace, no se abre)
+  $(document).on('click', '.course-card', function (e) {
+    if ($(e.target).closest('a, button, input, label').length) return;
+    const id = $(this).data('curso-id');
+    if (id) abrirDetalleCurso(id);
+  });
+
+  // Accesibilidad: Enter o Espacio con la tarjeta enfocada
+  $(document).on('keydown', '.course-card', function (e) {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    if ($(e.target).closest('a, button').length) return;
+    e.preventDefault();
+    const id = $(this).data('curso-id');
+    if (id) abrirDetalleCurso(id);
   });
 });
 </script>

@@ -9,6 +9,7 @@ Incluyen validaciones y campos de rol para JWT claims.
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from apps.usuarios.models import Usuario
 from apps.usuarios.tokens import get_tokens_for_user, CustomRefreshToken
 
@@ -113,27 +114,45 @@ class LoginSerializer(serializers.Serializer):
 class RefreshSerializer(serializers.Serializer):
     """
     Serializer para refresh token.
-    Retorna nuevo access token con claims actualizados.
+
+    Acá vive TODA la lógica de rotación: la vista sólo valida y devuelve
+    `serializer.data`, de modo que no hay dos caminos de código que se
+    desincronicen entre la vista y el serializer.
     """
     refresh = serializers.CharField(required=True, write_only=True)
 
     def validate(self, attrs):
-        refresh_token = attrs['refresh']
         try:
-            token = CustomRefreshToken(refresh_token)
-            # Verificar blacklist si está habilitado
+            token = CustomRefreshToken(attrs['refresh'])
+            # Lanza TokenError si el token ya fue usado y está en blacklist.
             token.check_blacklist()
-            attrs['token'] = token
-        except Exception as e:
+        except Exception:
             raise serializers.ValidationError('Token de refresco inválido o expirado.')
+        attrs['token'] = token
         return attrs
 
     def to_representation(self, instance):
         token = instance['token']
-        return {
-            'access': str(token.access_token),
-            'refresh': str(token) if token.blacklist() else None,
-        }
+        data = {'access': str(token.access_token)}
+
+        if not jwt_settings.ROTATE_REFRESH_TOKENS:
+            data['refresh'] = str(token)
+            return data
+
+        # --- Rotación de refresh token ---------------------------------
+        # BUG CORREGIDO: antes se hacía `CustomRefreshToken.for_user(user_id)`
+        # pasándole el ID (un entero) en vez del objeto usuario; `for_user`
+        # hace `getattr(user, 'id')` y reventaba con AttributeError (500).
+        user_id = token.payload.get(jwt_settings.USER_ID_CLAIM)
+        user = Usuario.objects.filter(pk=user_id).first()
+        if user is None:
+            data['refresh'] = str(token)
+            return data
+
+        data['refresh'] = str(CustomRefreshToken.for_user(user))
+        if jwt_settings.BLACKLIST_AFTER_ROTATION:
+            token.blacklist()   # consume el refresh recién usado
+        return data
 
 
 class UsuarioSerializer(serializers.ModelSerializer):

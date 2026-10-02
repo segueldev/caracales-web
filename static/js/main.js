@@ -265,6 +265,20 @@ window.AcademiaFloppa = {
   formatCLP: (value) => {
     return 'CLP ' + parseFloat(value || 0).toLocaleString('es-CL');
   },
+
+  /**
+   * Precio en pesos chilenos con el billete al lado (formato pedido):
+   *   precioHTML(499990) -> 'CLP 499.990 <img class="ico-peso" ...>'
+   *   precioHTML(79990)  -> 'CLP 79.990  <img class="ico-peso" ...>'
+   * El separador de miles lo pone toLocaleString('es-CL') (punto chileno).
+   * Devuelve HTML, así que hay que usarlo con .html() y no con .text().
+   */
+  precioHTML: (value) => {
+    const monto = parseFloat(value || 0).toLocaleString('es-CL');
+    const icono = window.ICONO_PESO;
+    if (!icono) return 'CLP ' + monto;
+    return `CLP ${monto} <img class="ico-peso" src="${icono}" alt="CLP" title="Pesos chilenos">`;
+  },
   
   // Formatear fecha
   formatDate: (dateString) => {
@@ -297,6 +311,9 @@ window.AcademiaFloppa = {
     setTimeout(() => toast.alert('close'), 5000);
   }
 };
+
+// Atajo global: los templates llaman a precioHTML(...) directamente.
+window.precioHTML = AcademiaFloppa.precioHTML;
 
 // CSRF token para AJAX
 $.ajaxSetup({

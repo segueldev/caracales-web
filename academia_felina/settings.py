@@ -91,6 +91,29 @@ WSGI_APPLICATION = 'academia_felina.wsgi.application'
 # -----------------------------------------------------------------------------
 # DATABASE - POSTGRESQL (OBLIGATORIO SEGÚN PAUTA - NO SQLITE)
 # -----------------------------------------------------------------------------
+# POR QUÉ POSTGRESQL Y NO SQLITE:
+# La pauta exige "Configuración nativa con PostgreSQL o MySQL (no SQLite)".
+# SQLite guarda todo en un único archivo y trabaja con bloqueo de archivo
+# completo; eso no sirve para demostrar el CONTROL CONCURRENTE de cupos que
+# evalúa esta prueba. PostgreSQL sí ofrece bloqueo a nivel de FILA, que es lo
+# que aprovecha `select_for_update()` en apps/matriculas/services.py.
+#
+# CADA CLAVE:
+#   ENGINE        -> driver oficial de Django (módulo django.db.backends.postgresql,
+#                    que habla con el servidor por libpq / psycopg).
+#   NAME          -> nombre de la BD creada con `createdb academia_felina`.
+#   USER/PASSWORD -> credenciales del rol de PostgreSQL (no las de superusuario
+#                    de Django: esas son del admin de /admin/).
+#   HOST/PORT     -> 127.0.0.1:5432 (por defecto de la instalación).
+#   CONN_MAX_AGE  -> "conexión persistente": reutiliza la misma conexión TCP
+#                    entre peticiones durante 60 s en vez de abrir y cerrar una
+#                    por request. Baja la latencia y es el motivo por el que
+#                    una segunda petición responde más rápido.
+#   connect_timeout -> evita que la app se cuelgue si PostgreSQL no está arriba.
+#
+# TODOS LOS VALORES VIVEN EN EL ARCHIVO `.env` (python-decouple), por lo que
+# NO hay credenciales duras en el código. Se copia de `.env.example`.
+# -----------------------------------------------------------------------------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -136,7 +159,10 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = 'media/'
+# Debe empezar y terminar con '/': si no, `imagen.url` devuelve una ruta
+# RELATIVA y las fotos de curso se rompen en cualquier página que no sea la raíz
+# (en /catalogo/ el navegador pediría /catalogo/media/... y daría 404).
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # -----------------------------------------------------------------------------
@@ -147,25 +173,42 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # -----------------------------------------------------------------------------
 # DJANGO REST FRAMEWORK CONFIGURATION
 # -----------------------------------------------------------------------------
+# Configuración GLOBAL: aplica a todos los ViewSets salvo que la sobrescriban
+# con `authentication_classes`, `permission_classes` o `filter_backends` a nivel
+# de clase (que es como se hace el RBAC en este proyecto).
 REST_FRAMEWORK = {
-    # Autenticación por defecto: JWT
+    # Autenticación por defecto: JWT.
+    # DRF lee la cabecera `Authorization: Bearer <token>` y, si el token es
+    # válido, rellena `request.user` con el Usuario del claim `user_id`.
+    # SIN esto, `request.user` sería AnonymousUser y todos los permisos fallarían.
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    # Permisos por defecto: permitir lectura pública, requerir auth para escritura
+    # Permisos por defecto: AllowAny.
+    # DECISIÓN DE DISEÑO IMPORTANTE: el permiso por defecto es abierto para que
+    # el catálogo sea consultable sin login (pauta: "Endpoints de lectura pública
+    # para catálogo/oferta"). La RESTRICCIÓN REAL no está aquí sino en cada
+    # ViewSet vía get_permissions() -> IsCoordinador / IsEstudiante (RBAC).
+    # Si se dejara IsAuthenticated global, el catálogo pediría token y el
+    # visitante anónimo no vería nada.
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
-    # Filtrado con django-filter
+    # Filtrado con django-filter (pauta E: "Sistema de filtros aplicado sobre
+    # campos clave del modelo"). Los ViewSets lo habilitan declarando
+    # `filterset_class = CursoFilter`; aquí queda el backend disponible.
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.SearchFilter',
         'rest_framework.filters.OrderingFilter',
     ],
-    # Paginación
+    # Paginación: los listados devuelven {count, next, previous, results}
+    # con 20 ítems por página, en vez de volcar toda la tabla.
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    # Esquema OpenAPI/Swagger con drf-spectacular
+    # Esquema OpenAPI/Swagger con drf-spectacular (pauta: "Soporte de
+    # Documentación API: Swagger / OpenAPI"). Genera /api/schema/ (JSON/YAML)
+    # y lo consume /api/docs/ (Swagger UI).
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     # Formato de fechas
     'DATETIME_FORMAT': '%d/%m/%Y %H:%M',
@@ -175,6 +218,29 @@ REST_FRAMEWORK = {
 # -----------------------------------------------------------------------------
 # SIMPLE JWT CONFIGURATION - CON CLAIMS PERSONALIZADOS (ROL)
 # -----------------------------------------------------------------------------
+# CICLO DE VIDA DEL TOKEN
+#   login -> access (60 min) + refresh (7 días)
+#   access expira -> POST /api/auth/refresh/ devuelve un access nuevo
+#   logout/rotación -> el refresh se BLACKLISTEA y deja de servir.
+#
+# CLAVES QUE IMPORTAN PARA LA DEFENSA:
+#   ACCESS_TOKEN_LIFETIME  -> caducidad corta del token de uso diario.
+#   REFRESH_TOKEN_LIFETIME -> caducidad larga del "pase de renovación".
+#   ROTATE_REFRESH_TOKENS  -> en cada refresh se emite un refresh NUEVO y el
+#                             viejo se invalida (si lo roban, sólo sirve una vez).
+#   BLACKLIST_AFTER_ROTATION -> el refresh anterior queda registrado en la tabla
+#                             `token_blacklist_outstandingtoken` (app
+#                             `token_blacklist` instalada arriba).
+#   ALGORITHM HS256        -> firma HMAC-SHA256 con SECRET_KEY. El payload NO
+#                             va cifrado: cualquiera puede LEERLO (base64), pero
+#                             NADIE puede FALSIFICARLO sin la clave.
+#   AUTH_HEADER_TYPES       -> exige el prefijo "Bearer".
+#   USER_ID_CLAIM          -> Django busca ese claim para reconstruir request.user.
+#   JTI_CLAIM              -> identificador único del token, base del blacklist.
+#
+# El claim `rol` NO se agrega aquí sino en apps/usuarios/tokens.py
+# (CustomAccessToken / CustomRefreshToken), porque necesita leer el modelo
+# Usuario y eso no corresponde en settings.
 from datetime import timedelta
 
 SIMPLE_JWT = {

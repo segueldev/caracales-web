@@ -41,6 +41,29 @@ Aquí se suben las **imágenes que reemplazan a los emojis** de la página de in
 
 ---
 
+## 📦 Ya entregados en esta versión
+
+Estos archivos vienen incluidos en el proyecto (copiados de la carpeta de
+entrega) y **no hace falta volver a subirlos**:
+
+| Archivo | Se usa en |
+|---|---|
+| `punto-floppa.png` | punto de la insignia del hero |
+| `flecha-roja.png` | flecha del botón "Ver todo el catálogo" |
+| `certificado.png`, `vitalicio.png`, `privada.png` | indicadores de confianza |
+| `cupo.png` | ticket de la insignia de cupos |
+| `comprobado.png` | sello *FEATURED* junto a "Destacados" |
+| `sombrero.png` | birrete de "Matrícula Abierta 2026" |
+| `meganoticias.png` | sello de prensa en `/nuestra-historia/` |
+| `peso-chileno.png` | billete del precio `CLP 499.990` |
+| `areas/caza.png` | hacha del área Caza (también la usa la API vía `area_icono_img`) |
+
+> Los iconos de área **sí** siguen el mecanismo automático: la API devuelve
+> `area_icono_img` sólo si el archivo existe en `static/assets/iconos/areas/`;
+> si no existe, los frontends muestran el emoji del área.
+
+---
+
 ## ⚙️ Especificaciones recomendadas
 
 - **Formato:** PNG con fondo transparente (también funciona SVG, WebP o JPG)

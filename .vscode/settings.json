@@ -1,0 +1,26 @@
+{
+  // =============================================================================
+  // ACADEMIA FELINA FLOPPA — ajustes del espacio de trabajo (VS Code)
+  // =============================================================================
+  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "editor.formatOnSave": false,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true
+  },
+  "search.exclude": {
+    "**/venv": true,
+    "**/staticfiles": true,
+    "**/node_modules": true
+  },
+  "[python]": {
+    "editor.tabSize": 4
+  },
+  "[html]": { "editor.tabSize": 2 },
+  "[css]": { "editor.tabSize": 2 }
+}

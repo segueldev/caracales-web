@@ -8,12 +8,14 @@ Vistas HTML base (templates con liquid glass) y API endpoints core.
 from django.urls import path
 from apps.core.views import (
     HomeView, CatalogoView, MiCarroView, MisMatriculasView,
-    CoordinadorDashboardView, PerfilView, HealthCheckView
+    CoordinadorDashboardView, PerfilView, HealthCheckView,
+    NuestraHistoriaView
 )
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
     path('catalogo/', CatalogoView.as_view(), name='catalogo'),
+    path('nuestra-historia/', NuestraHistoriaView.as_view(), name='nuestra_historia'),
     path('mi-carro/', MiCarroView.as_view(), name='mi_carro'),
     path('mis-matriculas/', MisMatriculasView.as_view(), name='mis_matriculas'),
     path('coordinador/', CoordinadorDashboardView.as_view(), name='coordinador_dashboard'),

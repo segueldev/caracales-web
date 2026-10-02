@@ -60,7 +60,7 @@
               <h5>Resumen</h5>
               <div class="d-flex justify-content-between mb-2">
                 <span>Subtotal</span>
-                <strong id="carro-subtotal">CLP 0</strong>
+                <strong id="carro-subtotal">CLP 0<img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></strong>
               </div>
               <div class="d-flex justify-content-between mb-2">
                 <span>Descuentos</span>
@@ -69,7 +69,7 @@
               <hr class="border-secondary">
               <div class="d-flex justify-content-between fs-5">
                 <span>Total</span>
-                <strong id="carro-total" class="text-success">CLP 0</strong>
+                <strong id="carro-total" class="text-success">CLP 0<img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></strong>
               </div>
               <small class="text-muted d-block mt-2">Los cupos se validan y descuentan al confirmar el pago.</small>
             </div>
@@ -164,9 +164,9 @@ $(document).ready(function() {
           <td><span class="badge bg-secondary">${curso.area_icono || '🐾'} ${curso.area_nombre || ''}</span></td>
           <td><span class="badge bg-info">${curso.modalidad || ''}</span></td>
           <td>${curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString('es-CL') : '-'}</td>
-          <td class="text-end fw-bold">CLP ${parseFloat(item.precio_congelado || curso.precio).toLocaleString('es-CL')}</td>
+          <td class="text-end fw-bold">${precioHTML(item.precio_congelado || curso.precio)}</td>
           <td class="text-center">
-            <button class="btn btn-sm btn-outline-danger btn-quitar-item" data-item-id="${item.id}" title="Quitar">
+            <button class="btn btn-sm btn-outline-danger btn-quitar-item" data-item-id="${item.id}" data-curso-id="${item.curso_id || curso.id}" title="Quitar">
               <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
             </button>
           </td>
@@ -175,20 +175,22 @@ $(document).ready(function() {
       tbody.append(row);
     });
     
-    // Actualizar totales
-    $('#carro-subtotal').text('CLP ' + totalPrecio.toLocaleString('es-CL'));
-    $('#carro-total').text('CLP ' + totalPrecio.toLocaleString('es-CL'));
+    // Actualizar totales (precioHTML devuelve HTML, por eso .html() y no .text())
+    $('#carro-subtotal').html(precioHTML(totalPrecio));
+    $('#carro-total').html(precioHTML(totalPrecio));
   }
 
-  // Quitar item
+  // Quitar item del carro
   $(document).on('click', '.btn-quitar-item', function() {
     const btn = $(this);
-    const itemId = btn.data('item-id');
+    // El endpoint recibe el curso_id (no el id del item del carro),
+    // por eso se lee data-curso-id de la fila/fila-botón.
+    const cursoId = btn.data('curso-id');
     
     if (!confirm('¿Quitar este curso del carro?')) return;
     
     $.ajax({
-      url: `/api/carro/quitar/${itemId}/`, // Necesitamos ajustar URL
+      url: `/api/carro/quitar/${cursoId}/`,
       method: 'DELETE',
       headers: { 'Authorization': 'Bearer ' + token },
       success: function() {

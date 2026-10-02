@@ -27,16 +27,40 @@ from apps.academico.models import Curso
 class CarroMatriculaViewSet(viewsets.GenericViewSet):
     """
     ViewSet para Carro de Matrícula PERSISTENTE (1:1 Usuario).
-    
+
     Endpoints:
     - GET /api/carro/           -> Ver carro actual (items, totales)
     - POST /api/carro/agregar/  -> Agregar curso al carro
     - DELETE /api/carro/quitar/{curso_id}/ -> Quitar curso del carro
     - DELETE /api/carro/limpiar/ -> Vaciar carro completo
     - POST /api/carro/checkout/ -> Procesar checkout (crea orden PENDIENTE)
-    
+
     Permisos: Solo ESTUDIANTE autenticado.
     CUMPLE PAUTA: "Persistencia del Carro post-logout en PostgreSQL"
+
+    --------------------------------------------------------------------------
+    ¿POR QUÉ EL CARRO SOBREVIVE AL LOGOUT? (pregunta clave de la defensa)
+    --------------------------------------------------------------------------
+    No hay NADA de estado en el cliente. El carro es una FILA de la tabla
+    `matriculas_carromatricula` en PostgreSQL, con `estudiante_id` como
+    OneToOneField. El flujo es:
+
+      1. El token JWT viaja en `Authorization: Bearer ...`.
+      2. DRF lo valida y puebla `request.user` con el claim `user_id`.
+      3. `get_object()` hace `get_or_create(estudiante=request.user, activo=True)`
+         -> SIEMPRE devuelve la MISMA fila para ese usuario.
+      4. Los ítems se leen con `carro.items` (ForeignKey a esa fila).
+
+    Al hacer logout sólo se emite un token nuevo y se blacklista el refresh:
+    la fila del carro NUNCA se toca. Por eso al volver a entrar, o desde otro
+    dispositivo con el mismo usuario, los ítems siguen ahí.
+    En cambio, si el carro fuera un objeto en `session` o en localStorage,
+    al cerrar sesión desaparecería: eso es exactamente lo que la pauta
+    descarta ("el carro depende de la sesión temporal").
+
+    NOTA DE SEGURIDAD: un usuario jamás puede leer el carro de otro, porque
+    el filtro de `get_object()` está amarrado a `request.user` (viene del
+    token, no del body de la petición).
     """
     permission_classes = [IsEstudiante]
     serializer_class = CarroMatriculaSerializer
@@ -109,14 +133,36 @@ class CarroMatriculaViewSet(viewsets.GenericViewSet):
 class OrdenMatriculaViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet para Órdenes de Matrícula (Historial del estudiante).
-    
+
     Endpoints:
     - GET /api/matriculas/              -> Listar mis órdenes
     - GET /api/matriculas/{id}/         -> Detalle de orden
+    - GET /api/mis-matriculas/          -> (alias) igual que listar mis órdenes
     - POST /api/matriculas/{id}/pagar/  -> Pagar orden (PENDIENTE -> PAGADO)
     - POST /api/matriculas/{id}/cancelar/ -> Cancelar orden (estudiante)
-    
+
     Permisos: ESTUDIANTE ve solo sus órdenes (IsOwnerOrCoordinador)
+
+    --------------------------------------------------------------------------
+    MÁQUINA DE ESTADOS DE LA ORDEN (CHOICES -> OrdenMatricula.Estado)
+    --------------------------------------------------------------------------
+        PENDIENTE --pagar()--> PAGADO --cancelar()--> CANCELADO
+              |                   |                        ^
+              +---cancelar()------+--> CANCELADO           |
+                                                          |
+        PAGADO --coordinador PATCH .../estado/--> ENTREGADO (fin de ciclo)
+
+    REGLAS QUE HAY QUE SABER ARGUMENTAR:
+    * `get_queryset()` filtra SIEMPRE por `estudiante=self.request.user`; es la
+      garantía de aislamiento entre estudiantes (IDOR).
+    * Sólo una orden PENDIENTE puede pagarse (`puede_pagar`); eso impide pagar
+      dos veces la misma orden.
+    * Al cancelar, si la orden estaba PAGADA se llama a `liberar_cupos_orden()`
+      ANTES de cambiar el estado, porque esa función decide si devuelve cupos
+      en función del estado previo. Si se cambiara el estado primero, ya no
+      sabría si había que reponer o no.
+    * `IsOwnerOrCoordinador` es `has_object_permission`, o sea se ejecuta en
+      `self.get_object()`: con un id ajeno responde 403/404, nunca 200.
     """
     permission_classes = [IsEstudiante, IsOwnerOrCoordinador]
     

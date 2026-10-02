@@ -48,6 +48,9 @@ class CursoListSerializer(serializers.ModelSerializer):
     """Serializer ligero para listado de cursos (catálogo público)"""
     area_nombre = serializers.CharField(source='area.nombre', read_only=True)
     area_icono = serializers.CharField(source='area.icono', read_only=True)
+    # Imagen de icono del área (ej: el hacha de Caza). Devuelve la ruta SÓLO si
+    # el archivo existe en static/; si no, los frontends usan el emoji `area_icono`.
+    area_icono_img = serializers.SerializerMethodField()
     coordinador_nombre = serializers.CharField(source='coordinador.get_full_name', read_only=True)
     esta_disponible = serializers.BooleanField(read_only=True)
     cupos_ocupados = serializers.IntegerField(read_only=True)
@@ -57,11 +60,23 @@ class CursoListSerializer(serializers.ModelSerializer):
         model = Curso
         fields = [
             'id', 'codigo', 'nombre', 'slug', 'resumen', 'imagen_url',
-            'area_nombre', 'area_icono', 'coordinador_nombre',
+            'area_nombre', 'area_icono', 'area_icono_img', 'coordinador_nombre',
             'modalidad', 'fecha_inicio', 'fecha_fin', 'fecha_limite_inscripcion',
             'cupos_maximos', 'cupos_disponibles', 'cupos_ocupados',
             'precio', 'esta_disponible', 'destacado',
         ]
+
+    def get_area_icono_img(self, obj):
+        """Ruta (relativa a static/) del icono en imagen del área.
+
+        Sólo se devuelve si el archivo existe en disco, para que los frontends
+        puedan comprobarlo y caer en el emoji cuando no hay imagen.
+        """
+        from django.contrib.staticfiles import finders
+        if not obj.area_id:
+            return None
+        ruta = obj.area.icono_img
+        return ruta if finders.find(ruta) else None
 
     def get_imagen_url(self, obj):
         if obj.imagen:

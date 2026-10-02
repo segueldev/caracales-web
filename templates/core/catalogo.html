@@ -144,7 +144,8 @@ $(document).ready(function() {
       { 
         data: 'precio',
         render: function(data) {
-          return `CLP ${parseFloat(data).toLocaleString('es-CL')}`;
+          {# precioHTML() (main.js) imprime "CLP 499.990 <img class=ico-peso>" #}
+          return precioHTML(data);
         }
       },
       { 

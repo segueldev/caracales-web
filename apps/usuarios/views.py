@@ -91,29 +91,11 @@ class CustomTokenRefreshView(APIView):
     serializer_class = RefreshSerializer
 
     def post(self, request):
+        # Toda la lógica (claims de rol + rotación/blacklist del refresh)
+        # vive en RefreshSerializer; la vista sólo orquesta.
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-        token = serializer.validated_data['token']
-
-        # Rotación de refresh token (si configurado)
-        from django.conf import settings
-        from rest_framework_simplejwt.settings import api_settings as jwt_settings
-
-        if jwt_settings.ROTATE_REFRESH_TOKENS:
-            try:
-                token.blacklist()
-            except AttributeError:
-                pass  # Blacklist no configurado
-
-            new_refresh = CustomRefreshToken.for_user(token.payload.get('user_id'))
-            return Response({
-                'access': str(token.access_token),
-                'refresh': str(new_refresh),
-            }, status=status.HTTP_200_OK)
-
-        return Response({
-            'access': str(token.access_token),
-        }, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class PerfilView(generics.RetrieveUpdateAPIView):

@@ -35,3 +35,24 @@ def static_exists(ruta_relativa):
     # finders.search en los directorios de origen (STATICFILES_DIRS + apps),
     # que es exactamente lo que usa Django para servir los estáticos en dev.
     return finders.find(ruta_relativa) is not None
+
+
+@register.filter(name='clp')
+def clp(valor):
+    """
+    Formatea un precio en pesos chilenos con separador de miles (punto).
+
+    Uso en el template:
+
+        {% load estilos_extras %}
+        CLP {{ curso.precio|clp }}     {# 499990 -> 499.990 #}
+        CLP {{ curso.precio|clp }}     {#  79990 ->  79.990 #}
+
+    Motivo: `floatformat:0` no agrupa los miles y el precio se leía como
+    "499990". Se hace el formateo en Python para que la vista HTML coincida
+    exactamente con lo que muestra el JavaScript (toLocaleString('es-CL')).
+    """
+    try:
+        return f"{int(round(float(valor))):,}".replace(',', '.')
+    except (TypeError, ValueError):
+        return valor

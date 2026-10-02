@@ -198,18 +198,90 @@ class Curso(TimeStampedModel, SoftDeleteModel):
     def cupos_ocupados(self):
         return self.cupos_maximos - self.cupos_disponibles
 
-    def descontar_cupo(self):
-        """Descuenta un cupo atómicamente (usar en transacción)"""
-        if self.cupos_disponibles > 0:
-            self.cupos_disponibles -= 1
-            self.save(update_fields=['cupos_disponibles', 'updated_at'])
-            return True
-        return False
+    def descontar_cupo(self) -> bool:
+        """
+        Descuenta UN cupo y devuelve True si lo consiguió.
 
-    def liberar_cupo(self):
-        """Libera un cupo (al cancelar matrícula)"""
-        if self.cupos_disponibles < self.cupos_maximos:
-            self.cupos_disponibles += 1
-            self.save(update_fields=['cupos_disponibles', 'updated_at'])
-            return True
-        return False
+        SENTENCIA QUE GENERA (una sola, condicionada):
+
+            UPDATE academico_curso
+               SET cupos_disponibles = cupos_disponibles - 1,
+                   updated_at        = <ahora>
+             WHERE id = <id>
+               AND cupos_disponibles > 0;
+
+        ¿POR QUÉ `F()` Y NO `self.cupos_disponibles -= 1`?
+        La forma ingenua (leer en Python -> restar 1 -> `save()`) escribe la
+        fila COMPLETA con un valor calculado con datos viejos. Si dos pagos
+        llegan a la vez, ambos leen el mismo número, ambos restan 1 y el
+        segundo sobreescribe al primero: se pierde una resta (lost update) o
+        se descuenta dos veces. Al delegar la resta al motor de PostgreSQL y
+        poner la validación EN EL PROPIO `WHERE`, la operación es indivisible:
+        o encuentra cupo y descuenta, o no lo encuentra y no hace nada.
+        `self.save()` jamás podría dar esa garantía, porque dispara un
+        `UPDATE ... SET cupos_disponibles = <valor viejo>` que no está
+        condicionado.
+
+        Devolución: `QuerySet.update()` retorna la cantidad de filas afectadas.
+        0 filas == no había cupo -> devolvemos False (la vista responde 400 y
+        `procesar_pago_orden()` lanza el ValueError que dispara el ROLLBACK).
+
+        SEGUNDA CAPA: en el flujo de pago esta fila ya viene bloqueada con
+        `select_for_update()` (ver apps/matriculas/services.py), así que además
+        del candado de fila hay la condición atómica en SQL.
+
+        NOTA: `.update()` NO dispara `save()` ni el `auto_now` de `updated_at`,
+        por eso se asigna explícitamente (igual que hace la plantilla SQL).
+        """
+        from django.db.models import F
+        from django.utils import timezone
+
+        filas = self.__class__.objects.filter(
+            pk=self.pk,
+            cupos_disponibles__gt=0,
+        ).update(
+            cupos_disponibles=F('cupos_disponibles') - 1,
+            updated_at=timezone.now(),
+        )
+
+        if filas == 0:
+            return False
+
+        # Sincronizar el objeto en memoria con el nuevo valor de la BD
+        self.refresh_from_db(fields=['cupos_disponibles', 'updated_at'])
+        return True
+
+    def liberar_cupo(self) -> bool:
+        """
+        Devuelve UN cupo al catálogo (se usa al CANCELAR una orden ya pagada).
+
+        Mismo razonamiento que `descontar_cupo`, pero con la condición invertida:
+        el `WHERE cupos_disponibles < cupos_maximos` impide que un error de
+        lógica haga que el curso tenga MÁS cupos libres que los que existen
+        (lo que abriría una vendimia imposible de vender).
+
+            UPDATE academico_curso
+               SET cupos_disponibles = cupos_disponibles + 1,
+                   updated_at        = <ahora>
+             WHERE id = <id>
+               AND cupos_disponibles < cupos_maximos;
+
+        CUMPLE PAUTA: "Si la orden es CANCELADA, el cupo del curso se libera
+        automáticamente para que otro estudiante pueda matricularse."
+        """
+        from django.db.models import F
+        from django.utils import timezone
+
+        filas = self.__class__.objects.filter(
+            pk=self.pk,
+            cupos_disponibles__lt=F('cupos_maximos'),
+        ).update(
+            cupos_disponibles=F('cupos_disponibles') + 1,
+            updated_at=timezone.now(),
+        )
+
+        if filas == 0:
+            return False
+
+        self.refresh_from_db(fields=['cupos_disponibles', 'updated_at'])
+        return True

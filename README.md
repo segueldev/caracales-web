@@ -79,8 +79,8 @@ Backend completo con **Django REST Framework** para la "Academia Felina Floppa" 
 
 ## Stack Tecnológico
 
-- **Python:** 3.11+ (probado en **3.14.7**)
-- **Django:** 5.0.6
+- **Python:** 3.10+ (probado en **3.14.7**)
+- **Django:** 5.2.17 (rama **LTS**)
 - **Django REST Framework:** 3.15.2
 - **Simple JWT:** 5.3.1 (tokens + blacklist + rotación)
 - **django-filter:** 23.5
@@ -91,11 +91,47 @@ Backend completo con **Django REST Framework** para la "Academia Felina Floppa" 
 
 ---
 
+## Inicio rápido
+
+El proyecto incluye scripts de arranque automáticos para no tener que tipear
+comandos sueltos:
+
+| SO | Comando |
+|---|---|
+| Linux / macOS | `./iniciar.sh` |
+| Windows | doble clic en `iniciar.bat` |
+| VS Code | `Ctrl+Shift+P` → *Tareas: ejecutar tarea...* → **Iniciar proyecto** |
+
+El script crea `venv/`, instala dependencias, copia `.env.example` a `.env`,
+comprueba que PostgreSQL esté corriendo, crea la base de datos si no existe,
+aplica migraciones, carga los datos de demostración **sólo si la tabla está
+vacía** y finalmente levanta el servidor.
+
+> La guía completa —con los pasos manuales, los errores frecuentes de cada SO
+> y la configuración de depuración de VS Code— está en **[INSTRUCCIONES.md](INSTRUCCIONES.md)**.
+
+Verificación de salud del proyecto (última corrida):
+
+```
+Regresión de URLs   : 109 rutas × 3 roles = 207 peticiones, 0 respuestas 5xx
+Flujo E2E completo  : 37/37 comprobaciones OK
+                      (JWT + claims, carro 1:1, confirmar, pagar, cupos
+                       20 → 19, cancelar → 20, rutas alias de la pauta)
+Django check        : 0 issues
+/api/docs/ y /api/schema/ : 200
+```
+
+---
+
 ## Estructura del Proyecto
 
 ```
 academia_felina/
-├── academia_felina/          # Configuración principal (settings, urls, wsgi, asgi)
+├── iniciar.sh                  # Arranque automático en Linux/macOS
+├── iniciar.bat                 # Arranque automático en Windows
+├── INSTRUCCIONES.md            # Guía de instalación Linux/Windows/VS Code
+├── academia_felina/            # Configuración principal (settings, urls, wsgi, asgi)
+├── .vscode/                    # Depuración y tareas de VS Code
 ├── apps/
 │   ├── core/                 # Modelos base, permisos, context_processors, vistas HTML
 │   ├── usuarios/             # Usuario personalizado, JWT tokens, auth API + templates
@@ -113,9 +149,13 @@ academia_felina/
 
 ## Instalación y Ejecución
 
+> **Atajo:** en Linux ejecuta `./iniciar.sh` y en Windows `iniciar.bat`.
+> Lo que sigue es el procedimiento manual equivalente.
+
 ### 1. Clonar y entrar al directorio
 ```bash
-cd academia_felina
+git clone git@github.com:segueldev/caracales-web.git
+cd caracales-web
 ```
 
 ### 2. Crear entorno virtual e instalar dependencias
@@ -255,6 +295,52 @@ de Django y decide entre la imagen o el emoji:
 
 ---
 
+## Assets entregados por el usuario
+
+Todos los archivos siguientes provienen de la carpeta de entrega del alumno y
+fueron copiados a `static/assets/`. Ningún ícono fue generado por IA.
+
+| Archivo | Dónde se usa |
+|---|---|
+| `textura-floppa.jpg` | fondo de botones e insignias de sección |
+| `textura-madera.jpg` | fondo de las tarjetas "¿Por qué elegirnos?" |
+| `textura-papel.jpg` | fondo de las tarjetas de estadística |
+| `textura-piedra-laja.jpg`, `textura-footer.jpg` | fondo del pie de página |
+| `textura-matricula.jpg` | **insignia de cupos** (es un pizarrón: entra el marco de madera) |
+| `textura-cesped.webp` | botón "Ver todo el catálogo" (`.btn-cesped`) |
+| `textura-caracal.webp` | **borde** de los botones `.btn-outline-floppa` (reemplaza al naranja neón) |
+| `iconos/punto-floppa.png` | punto de la insignia del hero |
+| `iconos/flecha-roja.png` | flecha del botón de catálogo |
+| `iconos/certificado.png`, `vitalicia.png`, `privada.png` | indicadores de confianza del hero |
+| `iconos/cupo.png` | ticket que sobresale de la insignia de cupos |
+| `iconos/comprobado.png` | sello *FEATURED* junto a "Destacados" |
+| `iconos/sombrero.png` | birrete a la derecha de "Matrícula Abierta 2026" |
+| `iconos/meganoticias.png` | sello de prensa en `/nuestra-historia/` |
+| `iconos/peso-chileno.png` | billete del formato de precio `CLP 499.990` |
+| `iconos/areas/caza.png` | **hacha** del área Caza (API: `area_icono_img`) |
+| `historia-esfinge.jpg` | imagen del manifiesto `/nuestra-historia/` |
+| `sello-plagio.webp` | sello "Plágio é crime" junto a la firma (recortado de 6 MB a 106 KB) |
+
+## Interacciones del frontend
+
+- **Formato de precio chileno**: `CLP 499.990` + billete, en catálogo, home,
+  carro, mis matrículas y panel del coordinador (`AcademiaFloppa.precioHTML`).
+- **Modal de detalle de curso**: al hacer clic en una tarjeta se consulta
+  `GET /api/catalogo/cursos/<id>/` y se abre el modal de Bootstrap.
+- **Dato curioso**: las tarjetas de "¿Por qué elegirnos?" son clicables
+  (también con `Enter`/`Espacio`) y muestran un dato de los caracales con
+  animación de giro. Los textos salen de `features[].dato` en `HomeView`.
+- **Banda "Nuestra historia y nuestra lucha contra el plagio"**: titular
+  enorme en tipografía *Alfa Slab One* que enlaza a `/nuestra-historia/`.
+- **`/nuestra-historia/`**: manifiesto de origen; al pasar el mouse por el
+  titular, "Ducommun Marcelo" se subraya en rojo.
+- **Contorno del texto con degradado**: el trazo crema se pinta en un
+  `::before` con `z-index: -1`. No puede ir en el propio elemento porque
+  `-webkit-text-stroke` se pinta *después* del `background-clip: text` y
+  tapaba el degradado (el texto salía borroso).
+
+---
+
 ## Endpoints API Principales
 
 ### Autenticación
@@ -300,6 +386,25 @@ de Django y decide entre la imagen o el emoji:
 | GET/POST | `/api/catalogo/areas/` | CRUD áreas |
 | GET | `/api/matriculas/gestion/` | Listar todas las órdenes |
 | PATCH | `/api/matriculas/gestion/{id}/estado/` | Cambiar estado (PAGADO→ENTREGADO/CANCELADO) |
+
+### Rutas exactas de la MATRIZ DE PERMISOS de la pauta (Proyecto 2)
+
+La pauta EVA 2 enumera textualmente estas rutas. Son **alias**: no repiten
+lógica, apuntan a la misma vista/acción que las tablas anteriores. Esto hace
+que la matriz de la pauta se pueda demostrar tal cual está escrita:
+
+| Rol | Ruta (según pauta) | Implementación |
+|-----|--------------------|----------------|
+| PÚBLICO | `GET /api/cursos/` | `GET /api/catalogo/cursos/` |
+| PÚBLICO | `GET /api/areas/` | `GET /api/catalogo/areas/` |
+| ESTUDIANTE | `GET/POST/DELETE /api/carro-matricula/` | `GET/POST/DELETE /api/carro/` |
+| ESTUDIANTE | `POST /api/matriculas/confirmar/` | alias de `POST /api/carro/checkout/` |
+| ESTUDIANTE | `GET /api/mis-matriculas/` | alias de `GET /api/matriculas/mis-ordenes/` |
+| ESTUDIANTE | `GET /api/mis-matriculas/{id}/` | alias del detalle |
+| ESTUDIANTE | `POST /api/mis-matriculas/{id}/pagar/` | alias de `.../mis-ordenes/{id}/pagar/` |
+| ESTUDIANTE | `POST /api/mis-matriculas/{id}/cancelar/` | alias de `.../mis-ordenes/{id}/cancelar/` |
+| COORDINADOR | `POST/PUT/DELETE /api/cursos/` | `POST/PUT/DELETE /api/catalogo/cursos/` (403 si no es coordinador) |
+| COORDINADOR | `PATCH /api/matriculas/{id}/estado/` | alias de `PATCH /api/matriculas/gestion/{id}/estado/` |
 
 ---
 

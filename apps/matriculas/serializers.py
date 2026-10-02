@@ -245,33 +245,80 @@ class PagarOrdenSerializer(serializers.Serializer):
 class CambioEstadoOrdenSerializer(serializers.ModelSerializer):
     """
     Serializer para cambio de estado por COORDINADOR.
-    Permite: PAGADO -> ENTREGADO | CANCELADO
+    Permite: PENDIENTE -> CANCELADO ; PAGADO -> ENTREGADO | CANCELADO
     Si CANCELADO: repone cupos automáticamente.
-    
+
     CUMPLE PAUTA: "Si la orden es CANCELADA, el cupo del curso se libera automáticamente"
+                  "PATCH /API/MATRICULAS/{ID}/ESTADO/"
+
+    --------------------------------------------------------------------------
+    BUG CORREGIDO (producía un 500 en el endpoint que exige la pauta)
+    --------------------------------------------------------------------------
+    Este serializer tenía `read_only_fields = ['estado']`. En DRF, un campo
+    declarado como read-only se ELIMINA de `validated_data`, por lo que
+    `update()` hacía `instance.estado = None` y PostgreSQL rechazaba la fila
+    por la restricción NOT NULL de la columna `estado`:
+
+        IntegrityError: el valor nulo en la columna «estado» ... viola not-null
+
+    Además `validate_estado()` nunca llegaba a ejecutarse, porque DRF sólo
+    valida los campos presentes en `validated_data`. La anotación original
+    decía "se valida en view", pero la vista sólo llama a `serializer.save()`.
+
+    La solución es dejar `estado` escribible y hacer la validación aquí mismo:
+      * `validate()`       -> exige que el campo venga (también con partial=True)
+      * `validate_estado()`-> tabla de transiciones permitidas
+    Así la regla de negocio vive en un solo lugar y la vista sigue siendo
+    una línea.
     """
     class Meta:
         model = OrdenMatricula
         fields = ['estado', 'observaciones']
-        read_only_fields = ['estado']  # Se valida en view
+        # 'estado' NO es read-only: el coordinador DEBE poder escribirlo.
+
+    # Tabla de transiciones del ciclo de vida de la orden.
+    # Sirve también como documentación ejecutable del flujo transaccional.
+    TRANSICIONES = {
+        OrdenMatricula.Estado.PENDIENTE: [OrdenMatricula.Estado.CANCELADO],
+        OrdenMatricula.Estado.PAGADO: [
+            OrdenMatricula.Estado.ENTREGADO,
+            OrdenMatricula.Estado.CANCELADO,
+        ],
+        OrdenMatricula.Estado.ENTREGADO: [],   # estado final
+        OrdenMatricula.Estado.CANCELADO: [],   # estado final
+    }
+
+    def validate(self, attrs):
+        """
+        Se ejecuta SIEMPRE (también en PATCH parcial), a diferencia de
+        `validate_estado`. Su única tarea es exigir que venga el estado
+        destino: sin él no habría nada que transicionar.
+        """
+        if not attrs.get('estado'):
+            raise serializers.ValidationError(
+                {'estado': 'Debe indicar el estado destino de la orden.'}
+            )
+        return attrs
 
     def validate_estado(self, value):
+        """Valida que la transición esté permitida en el ciclo de vida."""
         orden = self.instance
-        transiciones_validas = {
-            OrdenMatricula.Estado.PENDIENTE: [OrdenMatricula.Estado.CANCELADO],
-            OrdenMatricula.Estado.PAGADO: [OrdenMatricula.Estado.ENTREGADO, OrdenMatricula.Estado.CANCELADO],
-            OrdenMatricula.Estado.ENTREGADO: [],
-            OrdenMatricula.Estado.CANCELADO: [],
-        }
-        permitidos = transiciones_validas.get(orden.estado, [])
+        permitidos = self.TRANSICIONES.get(orden.estado, [])
         if value not in permitidos:
             raise serializers.ValidationError(
-                f"No se puede cambiar de '{orden.get_estado_display()}' a '{dict(OrdenMatricula.Estado.choices)[value]}'."
+                f"No se puede cambiar de '{orden.get_estado_display()}' a "
+                f"'{dict(OrdenMatricula.Estado.choices)[value]}'."
             )
         return value
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        """
+        Aplica la transición. Va decorado con @transaction.atomic porque hace
+        DOS escrituras que deben ir juntas: liberar cupos del catálogo y
+        actualizar la orden. Si la segunda fallara, la primera debe deshacerse
+        (o tendríamos cupos repuestos con la orden todavía PAGADA).
+        """
         nuevo_estado = validated_data.get('estado')
         observaciones = validated_data.get('observaciones', '')
 
