@@ -210,9 +210,29 @@ REST_FRAMEWORK = {
     # Documentación API: Swagger / OpenAPI"). Genera /api/schema/ (JSON/YAML)
     # y lo consume /api/docs/ (Swagger UI).
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
-    # Formato de fechas
-    'DATETIME_FORMAT': '%d/%m/%Y %H:%M',
-    'DATE_FORMAT': '%d/%m/%Y',
+    # ---------------------------------------------------------------------
+    # FORMATO DE FECHAS - BUG CORREGIDO
+    # ---------------------------------------------------------------------
+    # Estaba en '%d/%m/%Y %H:%M', es decir "01/11/2026 01:52" (orden chileno).
+    # El front hace `new Date(valor)`, y JavaScript SIEMPRE interpreta
+    # MM/DD/AAAA (mes primero). Con eso la API producía DOS defectos distintos:
+    #
+    #   * Día > 12 -> mes 23 es imposible -> "Invalid Date" en pantalla.
+    #     (FLF-005, con fecha real 23-10-2026, mostraba literalmente "Invalid Date")
+    #   * Día <= 12 -> lo interpretaba al revés y mentía EN SILENCIO.
+    #     (FLF-004, real 1-nov-2026, se veía 11-ene-2026)
+    #
+    # Además el propio esquema OpenAPI que publicamos en /api/schema/ ya
+    # declaraba `format: date-time` (RFC 3339) para fecha_inicio, created_at,
+    # fecha_pago... o sea que la documentación contradecía la implementación.
+    #
+    # Se usa el valor por defecto de DRF: ISO 8601 / RFC 3339
+    # ("2026-11-01T04:52:24+00:00"), que es el estándar de un API REST y es
+    # lo que new Date() parsea sin ambigüedad. La presentación local
+    # (dd-mm-aaaa) es responsabilidad de la interfaz, en fechaHTML() de
+    # static/js/main.js: un API entrega datos, no formato de vitrina.
+    'DATETIME_FORMAT': 'iso-8601',
+    'DATE_FORMAT': 'iso-8601',
 }
 
 # -----------------------------------------------------------------------------

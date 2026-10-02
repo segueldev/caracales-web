@@ -163,7 +163,7 @@ $(document).ready(function() {
           </td>
           <td><span class="badge bg-secondary">${curso.area_icono || '🐾'} ${curso.area_nombre || ''}</span></td>
           <td><span class="badge bg-info">${curso.modalidad || ''}</span></td>
-          <td>${curso.fecha_inicio ? new Date(curso.fecha_inicio).toLocaleDateString('es-CL') : '-'}</td>
+          <td>${fechaHTML(curso.fecha_inicio)}</td>
           <td class="text-end fw-bold">${precioHTML(item.precio_congelado || curso.precio)}</td>
           <td class="text-center">
             <button class="btn btn-sm btn-outline-danger btn-quitar-item" data-item-id="${item.id}" data-curso-id="${item.curso_id || curso.id}" title="Quitar">

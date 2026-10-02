@@ -248,6 +248,28 @@ window.playSuccessSound = playSuccessSound;
 // =========================================================================
 // 4. UTILIDADES GLOBALES
 // =========================================================================
+
+/**
+ * Descompone un ISO 8601 del API en sus partes, SIN convertir de huso horario.
+ *
+ * Devuelve { anio, mes, dia, hora, minuto } o null si el valor no es una fecha.
+ * Se apoya en una expresión regular en vez de new Date() porque:
+ *   - new Date('11/01/2026') asume MM/DD/AAAA y puede devolver otra fecha;
+ *   - new Date('23/10/2026') devuelve Invalid Date (no existe el mes 23);
+ *   - new Date() convierte a la hora local del navegador, que puede mover
+ *     el día hacia atrás.
+ *
+ * Ejemplos:
+ *   '2026-11-01T04:52:24+00:00' -> {anio:'2026', mes:'11', dia:'01', hora:'04', minuto:'52'}
+ *   '2026-11-01'                -> {anio:'2026', mes:'11', dia:'01', hora:null,  minuto:null}
+ */
+function descomponerFecha(valor) {
+  if (!valor) return null;
+  const m = String(valor).match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+  if (!m) return null;
+  return { anio: m[1], mes: m[2], dia: m[3], hora: m[4] || null, minuto: m[5] || null };
+}
+
 window.AcademiaFloppa = {
   // Obtener token de acceso
   getToken: () => localStorage.getItem('access_token'),
@@ -280,16 +302,35 @@ window.AcademiaFloppa = {
     return `CLP ${monto} <img class="ico-peso" src="${icono}" alt="CLP" title="Pesos chilenos">`;
   },
   
-  // Formatear fecha
-  formatDate: (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('es-CL');
+  // ---------------------------------------------------------------------
+  // FECHA LEGIBLE - ver el bloque en academia_felina/settings.py (DATETIME_FORMAT)
+  //
+  // El API entrega ISO 8601: "2026-11-01T04:52:24+00:00".
+  // NO se usa new Date().toLocaleDateString() por dos motivos:
+  //
+  //   1. Desempaca SÓLO la parte de fecha y la reordena a dd-mm-aaaa.
+  //      Si el día viera antes del mes (11 de noviembre) se produce una
+  //      fecha distinta a la que envió el servidor, según el navegador.
+  //   2. NO convierte de zona horaria. Un curso que empieza el 1 de noviembre
+  //      tiene que decir "01-11-2026" también para quien entre desde otra
+  //      zona horaria; si el reloj UTC cae entre 00:00 y 03:00, toLocaleDateString()
+  //      lo retrocedería un día completo.
+  //
+  // fechaHTML('2026-11-01T04:52:24+00:00') -> '01-11-2026'
+  // fechaHTML('2026-11-01')               -> '01-11-2026'
+  // fechaHoraHTML(...)                    -> '01-11-2026 04:52'
+  // ---------------------------------------------------------------------
+  fechaHTML: (valor) => {
+    const p = descomponerFecha(valor);
+    if (!p) return valor ? String(valor) : '-';
+    return `${p.dia}-${p.mes}-${p.anio}`;
   },
-  
-  // Formatear datetime
-  formatDateTime: (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleString('es-CL');
+
+  fechaHoraHTML: (valor) => {
+    const p = descomponerFecha(valor);
+    if (!p) return valor ? String(valor) : '-';
+    const hora = p.hora ? ` ${p.hora}:${p.minuto}` : '';
+    return `${p.dia}-${p.mes}-${p.anio}${hora}`;
   },
   
   // Mostrar toast/notificación
@@ -314,6 +355,10 @@ window.AcademiaFloppa = {
 
 // Atajo global: los templates llaman a precioHTML(...) directamente.
 window.precioHTML = AcademiaFloppa.precioHTML;
+// Atajos de fecha: los templates (catálogo, carro, matrículas, panel del
+// coordinador) pintan fechas con fechaHTML(...) para que todas salgan igual.
+window.fechaHTML = AcademiaFloppa.fechaHTML;
+window.fechaHoraHTML = AcademiaFloppa.fechaHoraHTML;
 
 // CSRF token para AJAX
 $.ajaxSetup({

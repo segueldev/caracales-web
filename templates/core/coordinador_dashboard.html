@@ -338,7 +338,7 @@ $(document).ready(function() {
       { data: 'nombre' },
       { data: null, render: d => `${d.area_icono || '🐾'} ${d.area_nombre || ''}` },
       { data: 'modalidad' },
-      { data: 'fecha_inicio', render: d => d ? new Date(d).toLocaleDateString('es-CL') : '-' },
+      { data: 'fecha_inicio', render: fechaHTML },
       { data: 'precio', render: d => precioHTML(d) },
       { data: null, render: d => `<span class="badge ${d.cupos_disponibles > 0 ? 'bg-success' : 'bg-danger'}">${d.cupos_disponibles}/${d.cupos_maximos}</span>` },
       { data: 'estado', render: d => `<span class="badge ${d==='PUBLICADO'?'bg-success':d==='BORRADOR'?'bg-warning text-dark':'bg-secondary'}">${d}</span>` },
@@ -374,7 +374,7 @@ $(document).ready(function() {
     columns: [
       { data: 'numero_orden', render: d => `<code>${d}</code>` },
       { data: null, render: d => `${d.estudiante_nombre} (${d.estudiante_email})` },
-      { data: 'created_at', render: d => new Date(d).toLocaleDateString('es-CL') },
+      { data: 'created_at', render: fechaHTML },
       { data: 'matriculas', render: d => d ? d.length : 0 },
       { data: 'total', render: d => precioHTML(d) },
       { data: 'estado', render: d => `<span class="badge ${d==='PENDIENTE'?'bg-warning text-dark':d==='PAGADO'?'bg-success':d==='ENTREGADO'?'bg-info':'bg-danger'}">${d}</span>` },

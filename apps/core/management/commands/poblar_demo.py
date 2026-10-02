@@ -70,8 +70,13 @@ CURSOS_DEMO = [
 ]
 
 # Estudiantes de prueba: (username, email, first_name, last_name)
+# Nota: estudiante1 lleva el nombre del profesor de la asignatura
+# (Prof. Marcelo Patricio Alvarado Aravena) para que la demostración del
+# perfil "Mi Perfil" muestre un nombre real en vez de un placeholder.
+# Como Usuario.objects.get_or_create() sólo aplica `defaults` al CREAR, si se
+# cambia un valor aquí conviene regenerar la cuenta o actualizar la fila.
 ESTUDIANTES_DEMO = [
-    ('estudiante1', 'millabay@floppa.cl', 'Millaray', 'Catapilco'),
+    ('estudiante1', 'marcelo.alvarado@floppa.cl', 'Marcelo Patricio', 'Alvarado Aravena'),
     ('estudiante2', 'nahuel@floppa.cl', 'Nahuel', 'Quintriqueo'),
     ('estudiante3', 'sara@floppa.cl', 'Sara', 'Fuenzalida'),
     ('estudiante4', 'diego@floppa.cl', 'Diego', 'Mallén'),

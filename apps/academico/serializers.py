@@ -63,7 +63,7 @@ class CursoListSerializer(serializers.ModelSerializer):
             'area_nombre', 'area_icono', 'area_icono_img', 'coordinador_nombre',
             'modalidad', 'fecha_inicio', 'fecha_fin', 'fecha_limite_inscripcion',
             'cupos_maximos', 'cupos_disponibles', 'cupos_ocupados',
-            'precio', 'esta_disponible', 'destacado',
+            'precio', 'esta_disponible', 'destacado', 'estado',
         ]
 
     def get_area_icono_img(self, obj):
@@ -92,8 +92,11 @@ class CursoDetailSerializer(CursoListSerializer):
     prerequisitos = CursoListSerializer(many=True, read_only=True)
 
     class Meta(CursoListSerializer.Meta):
+        # 'estado' YA viene del serializer padre (se le añadió para que la
+        # columna "Estado" del catálogo no pintara "undefined"); no hay que
+        # declararlo otra vez aquí.
         fields = CursoListSerializer.Meta.fields + [
-            'descripcion', 'area', 'prerequisitos', 'estado',
+            'descripcion', 'area', 'prerequisitos',
             'created_at', 'updated_at',
         ]
 

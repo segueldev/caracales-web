@@ -234,6 +234,27 @@ main {
   .volume-slider:hover, .volume-slider:focus { width: 44px; }
 }
 
+/* Sello superior del home: "Matrícula Abierta 2026".
+   Al pasar el mouse por encima se subraya en ROJO.
+   Se usa text-decoration (y no border-bottom) porque el subrayado queda
+   pegado a la línea de texto y no desplaza nada al aparecer: el color
+   arranca transparente, así la maquetación es idéntica con y sin hover.
+   Se prende tanto al pasar sobre la frase como sobre todo el sello
+   ("Academia Oficial • Matrícula Abierta 2026"), para que el efecto se
+   active estés donde estés de esa línea. */
+.matricula-abierta {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 3px;
+  text-underline-offset: 4px;
+  text-decoration-skip-ink: none;
+  transition: text-decoration-color 0.25s ease;
+}
+.matricula-abierta:hover,
+.txt-amber-300:hover .matricula-abierta {
+  text-decoration-color: #ef4444;
+}
+
 /* Navigation Links - Inactive (Glass Nav Item) */
 .glass-nav-item {
   position: relative;
@@ -254,34 +275,52 @@ main {
     color 0.25s ease;
 }
 
+/* ------------------------------------------------------------------
+   REFLEJO DE VIDRIO (Liquid Glass)
+   Antes: un destello ESTRECHO que cruzaba el botón de izquierda a
+   derecha (@keyframes glass-sheen). Se veía como una línea blanca
+   pasando por encima, no como vidrio.
+   Ahora: la luz QUIETA de una superficie curva. El reflejo ocupa todo
+   el botón (brilla en el canto superior, se apaga hacia el centro y
+   devuelve un poco de luz en el canto inferior, como hace un vidrio
+   al que llega luz por arriba). Se destapa con un fundido al hacer
+   hover; nada se desplaza, así que no "cruza" nada.
+   Las burbujas (.burbuja) no se tocan: eso lo genera main.js. */
 .glass-nav-item::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    115deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent 70%
+    180deg,
+    rgba(255, 255, 255, 0.42) 0%,
+    rgba(255, 255, 255, 0.14) 40%,
+    rgba(255, 255, 255, 0) 66%,
+    rgba(255, 255, 255, 0.13) 100%
   );
-  transform: translateX(-130%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
   pointer-events: none;
 }
 
 .glass-nav-item:hover {
   transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px) saturate(160%);
-  -webkit-backdrop-filter: blur(10px) saturate(160%);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(14px) saturate(180%);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  border-color: rgba(255, 255, 255, 0.34);
   color: var(--secondary-foreground);
+  /* Halo de vidrio: sombra de flotación + luz especular arriba (el filo que
+     enciende la superficie), luz transmitida abajo y un canto exterior
+     apenas luminoso que define la silueta del "cristal". */
   box-shadow:
-    0 6px 18px -8px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+    0 10px 24px -12px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 
 .glass-nav-item:hover::after {
-  animation: glass-sheen 0.9s ease;
+  opacity: 1;
 }
 
 /* Navigation Links - Active (Glass Primary / Orange) */
@@ -310,17 +349,23 @@ main {
     color 0.25s ease;
 }
 
+/* Reflejo de vidrio (misma lectura de Liquid Glass que .glass-nav-item:
+   luz quieta en el canto superior, se apaga hacia abajo y devuelve un
+   destello leve en el borde inferior). Ver el bloque largo en
+   .glass-nav-item::after. */
 .glass-primary::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    115deg,
-    transparent 28%,
-    rgba(255, 255, 255, 0.45) 48%,
-    transparent 68%
+    180deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.16) 40%,
+    rgba(255, 255, 255, 0) 66%,
+    rgba(255, 255, 255, 0.14) 100%
   );
-  transform: translateX(-130%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
   pointer-events: none;
 }
 
@@ -330,12 +375,13 @@ main {
   filter: brightness(1.07) saturate(1.05);
   box-shadow:
     0 16px 34px -8px color-mix(in oklch, var(--primary) 78%, transparent),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
-    inset 0 -2px 8px 0 rgba(255, 255, 255, 0.2);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .glass-primary:hover::after {
-  animation: glass-sheen 0.9s ease;
+  opacity: 1;
 }
 
 .glass-primary:active {
@@ -478,6 +524,73 @@ main {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
+}
+
+/* ---------- Estado de publicación (columna del catálogo) ---------- */
+/* Píldora con degradado, icono y brillo de color. Antes era un badge plano de
+   Bootstrap y, peor aún, salía "undefined" porque el serializer no enviaba el
+   campo (ver el bloque en templates/core/catalogo.html). Los tres colores son
+   distinguibles entre sí y también en escala de grises, gracias al icono. */
+.af-estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.34rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+.af-estado--publicado {
+  background: linear-gradient(180deg, #22c55e, #15803d);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 12px -6px rgba(34, 197, 94, 0.95);
+}
+.af-estado--borrador {
+  background: linear-gradient(180deg, #f59e0b, #b45309);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 4px 12px -6px rgba(245, 158, 11, 0.95);
+}
+.af-estado--archivado {
+  background: linear-gradient(180deg, #71717a, #3f3f46);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 4px 12px -6px rgba(113, 113, 122, 0.95);
+}
+.af-estado--desconocido {
+  background: linear-gradient(180deg, #ef4444, #991b1b);
+}
+
+/* Modificador EXCLUSIVO del sello "Destacados" del home (home.html).
+   Mientras todos los demás .category-badge son rótulos de sección negros con
+   textura, éste se dibuja como un BOTÓN: degradado naranja/bermellón, texto
+   crema, borde blanco grueso (que es el que se pidió para toda la familia) y
+   una sombra cálida que lo levanta de la página. El resto de la familia no se
+   toca, para que el contraste con las demás insignias siga siendo evidente. */
+.category-badge--destacados {
+  background-color: #9a3412;
+  background-image:
+    linear-gradient(135deg, rgba(224, 128, 56, 0.95), rgba(178, 68, 45, 0.93)),
+    url("../assets/textura-floppa.jpg");
+  color: #fff8ef;
+  padding: 0.62rem 1.4rem;
+  font-size: 0.92rem;
+  letter-spacing: 0.1em;
+  text-shadow: 0 1px 2px rgba(60, 20, 5, 0.55);
+  box-shadow:
+    0 14px 28px -16px rgba(224, 128, 56, 1),
+    0 4px 10px -6px rgba(0, 0, 0, 0.85),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+/* Estrella delante del texto: refuerza que es la insignia de destacados y no
+   un simple rótulo de sección. */
+.category-badge--destacados::before {
+  content: "★";
+  margin-right: 0.5rem;
+  color: #fff3dd;
+  text-shadow: 0 0 9px rgba(255, 231, 179, 0.95);
 }
 
 /* ---------- Tables (DataTables) Styling ---------- */
@@ -778,17 +891,17 @@ table.dataTable tbody td a:hover {
   80% { transform: translateX(3px); }
 }
 
-@keyframes glass-sheen {
-  to {
-    transform: translateX(130%);
-  }
-}
+/* Nota: antes había aquí un @keyframes glass-sheen que desplazaba un destello
+   de -130% a +130% (la "línea blanca" que cruzaba el botón al hacer hover).
+   Se retiró junto con sus tres usos: los reflejos de la navbar ahora son un
+   degradado fijo que se destapa con opacity, sin desplazamiento. */
 
 @media (prefers-reduced-motion: reduce) {
   .animate-page-in,
   .form-control.is-invalid,
   .invalid-feedback,
   .glass-primary::after,
+  .glass-brown::after,
   .glass-nav-item::after {
     animation: none !important;
     transition: none !important;
@@ -945,17 +1058,21 @@ table.dataTable tbody td a:hover {
     color 0.25s ease;
 }
 
+/* Reflejo de vidrio (mismo tratamiento que .glass-nav-item y .glass-primary:
+   nada cruza el botón; se destapa la luz quieta del canto). */
 .glass-brown::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    115deg,
-    transparent 28%,
-    rgba(255, 255, 255, 0.45) 48%,
-    transparent 68%
+    180deg,
+    rgba(255, 255, 255, 0.45) 0%,
+    rgba(255, 255, 255, 0.16) 40%,
+    rgba(255, 255, 255, 0) 66%,
+    rgba(255, 255, 255, 0.14) 100%
   );
-  transform: translateX(-130%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
   pointer-events: none;
 }
 
@@ -965,12 +1082,13 @@ table.dataTable tbody td a:hover {
   filter: brightness(1.07) saturate(1.05);
   box-shadow:
     0 16px 34px -8px rgba(139, 94, 60, 0.6),
-    inset 0 1px 0 0 rgba(255, 255, 255, 0.7),
-    inset 0 -2px 8px 0 rgba(255, 255, 255, 0.2);
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.22),
+    0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .glass-brown:hover::after {
-  animation: glass-sheen 0.9s ease;
+  opacity: 1;
 }
 
 .glass-brown:active {

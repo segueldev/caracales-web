@@ -522,15 +522,20 @@
   text-transform: uppercase;
   color: var(--caracal-crema);
   /* Textura de matrícula entregada por el usuario (matricula textura.jpeg):
-     es un PIZARRÓN con marco de madera. Antes se veía "opaca" porque el
-     fondo se recortaba al centro verde y encima llevaba un velo negro.
-     Ahora: SIN velo y con `auto 100%` para que entre el marco de madera
-     completo (arriba y abajo) y se reconozca el pizarrón de un vistazo. */
+     es un PIZARRÓN con marco de madera. El fondo declarado abajo SÍ era verde
+     (#16301f), pero la textura se pinta ENCIMA y lo tapaba: su color medio es
+     #4b528b (azul pizarra, azul 140 vs verde 82), así que la insignia se leía
+     AZUL y no verde. Corregido con un velo verde por encima de la textura: se
+     conserva el dibujo (marco de madera y pizarrón) pero todo lee verde.
+     El velo deja pasar el grano: la madera clara queda como verde claro y el
+     pizarrón como verde oscuro, con lo que la textura sigue reconocible. */
   background-color: #16301f;
-  background-image: url("{% static 'assets/textura-matricula.jpg' %}?v=2");
-  background-repeat: repeat;
-  background-size: auto 100%;
-  background-position: left center;
+  background-image:
+    linear-gradient(rgba(21, 101, 52, 0.8), rgba(21, 101, 52, 0.8)),
+    url("{% static 'assets/textura-matricula.jpg' %}?v=2");
+  background-repeat: repeat, repeat;
+  background-size: auto 100%, auto 100%;
+  background-position: left center, left center;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
@@ -561,7 +566,19 @@
   border-color: rgba(110, 231, 168, 0.45);
 }
 .availability-badge.available .cupos-dot {
-  animation: pulse 2s ease-in-out infinite;
+  /* Latido del ticket de cupos (cupo.png).
+     Reutiliza el @keyframes `pulse` global (opacidad 1 -> 0.45 -> 1), pero
+     antes corría en 2 s: apenas 1 s bajando y 1 s subiendo, lo que se leía
+     como un parpadeo rápido en el que el ícono "desaparecía".
+     Ahora dura 4 s (2 s bajando, 2 s subiendo), que es más lento y deja
+     ver claramente que el ticket vuelve. Sólo cambia la duración de éste;
+     el resto de la página (las .pulse de fondo y .badge-dot) conserva 2 s.
+     La opacidad mínima se mantiene en 0.45 a propósito: es el "se va y
+     vuelve" que se pidió, no un ícono fijo.
+     No se anima `transform`: el ticket está posicionado con
+     translateY(-50%) rotate(-26deg) y con hover a rotate(-14deg), y una
+     animación de transform tendría más prioridad y lo rompería. */
+  animation: pulse 4s ease-in-out infinite;
 }
 .availability-badge.unavailable {
   color: #fecaca;
@@ -962,7 +979,7 @@
         <div class="d-inline-flex align-items-center gap-2 chip-panel px-3 py-2 rounded-pill mb-4 reveal">
           {# Punto de la insignia: nariz de Floppa (punto-floppa.png) con .pulse #}
           <img class="badge-dot pulse" src="{% static 'assets/iconos/punto-floppa.png' %}" alt="" aria-hidden="true">
-          <span class="small fw-medium txt-amber-300">Academia Oficial • Matrícula Abierta 2026<img class="ico-sombrero" src="{% static 'assets/iconos/sombrero.png' %}" alt="Birrete de graduación" title="Matrícula abierta"></span>
+          <span class="small fw-medium txt-amber-300">Academia Oficial • <span class="matricula-abierta">Matrícula Abierta 2026</span><img class="ico-sombrero" src="{% static 'assets/iconos/sombrero.png' %}" alt="Birrete de graduación" title="Matrícula abierta"></span>
         </div>
 
         <!-- Título principal + botón-imagen de la nariz a su derecha -->
@@ -1086,7 +1103,8 @@
       <div>
         {# Sello de sección + sello "FEATURED" entregado por el usuario #}
         <div class="d-flex align-items-center gap-2 mb-3">
-          <span class="category-badge mb-0">Destacados</span>
+          {# Único category-badge con MODIFICADOR: los demás son píldoras negras con textura (rótulos de sección); éste se pinta como botón naranja de destacados. Ver .category-badge--destacados en static/css/estilos.css #}
+          <span class="category-badge category-badge--destacados mb-0">Destacados</span>
           <img class="sello-destacado" src="{% static 'assets/iconos/comprobado.png' %}"
                alt="Destacado" title="Destacado">
         </div>
@@ -1460,9 +1478,9 @@ $(document).ready(function() {
           '<h4 class="mc-titulo mb-2">' + esc(d.nombre) + '</h4>' +
           '<p class="mc-desc">' + esc(d.descripcion || d.resumen || '') + '</p>' +
           filaDetalle('Coordinador', esc(d.coordinador_nombre) || 'Equipo Floppa') +
-          filaDetalle('Fecha de inicio', esc(d.fecha_inicio)) +
-          filaDetalle('Fecha de término', esc(d.fecha_fin)) +
-          filaDetalle('Límite de inscripción', esc(d.fecha_limite_inscripcion)) +
+          filaDetalle('Fecha de inicio', esc(fechaHTML(d.fecha_inicio))) +
+          filaDetalle('Fecha de término', esc(fechaHTML(d.fecha_fin))) +
+          filaDetalle('Límite de inscripción', esc(fechaHTML(d.fecha_limite_inscripcion))) +
           filaDetalle('Prerrequisitos', esc(prereq) || 'Ninguno') +
         '</div>' +
       '</div>'

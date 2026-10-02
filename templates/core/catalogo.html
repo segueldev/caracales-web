@@ -138,7 +138,7 @@ $(document).ready(function() {
       { 
         data: 'fecha_inicio',
         render: function(data) {
-          return data ? new Date(data).toLocaleDateString('es-CL') : '-';
+          return fechaHTML(data);
         }
       },
       { 
@@ -159,13 +159,27 @@ $(document).ready(function() {
       },
       { 
         data: 'estado',
-        render: function(data) {
-          const badges = {
-            PUBLICADO: 'bg-success',
-            BORRADOR: 'bg-warning text-dark',
-            ARCHIVADO: 'bg-secondary'
+        render: function(data, type, row) {
+          // ------------------------------------------------------------
+          // BUG CORREGIDO: la celda mostraba el texto literal "undefined".
+          // La columna pedía `data: 'estado'`, pero CursoListSerializer no
+          // incluía 'estado' en sus fields, así que el JSON no traía esa
+          // clave y el render recibía undefined. Se añadió 'estado' a las
+          // fields del listado (y se quitó de CursoDetailSerializer, que lo
+          // duplicaba) para que la columna tenga de dónde leer.
+          //
+          // ¿Sirve de algo en el catálogo? SÍ: el público sólo recibe
+          // PUBLICADO (ver CursoViewSet.get_queryset), pero un COORDINADOR
+          // que abra esta misma pantalla recibe también los borradores y los
+          // archivados, y ahí la columna es la única que avisa de ello.
+          // ------------------------------------------------------------
+          const mapa = {
+            PUBLICADO: { cls: 'af-estado af-estado--publicado', ico: '✅', txt: 'Publicado' },
+            BORRADOR:  { cls: 'af-estado af-estado--borrador',  ico: '✏️', txt: 'Borrador'  },
+            ARCHIVADO: { cls: 'af-estado af-estado--archivado', ico: '📦', txt: 'Archivado' }
           };
-          return `<span class="badge ${badges[data] || 'bg-secondary'}">${data}</span>`;
+          const e = mapa[data] || { cls: 'af-estado af-estado--desconocido', ico: '❓', txt: data || 'Sin estado' };
+          return `<span class="${e.cls}" title="Estado de publicación del curso">${e.ico} ${e.txt}</span>`;
         }
       },
       { 
