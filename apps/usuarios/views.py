@@ -54,6 +54,10 @@ class RegistroView(generics.CreateAPIView):
     """
     Registro público de nuevos estudiantes.
     Retorna tokens JWT con claims de rol inmediatamente.
+
+    Al igual que LoginView, además de los tokens se abre la sesión de Django:
+    tras registrarse el usuario debe verse como "logueado" en el HTML, si no
+    aparecería el formulario de login justo después de crear la cuenta.
     """
     queryset = Usuario.objects.all()
     serializer_class = RegistroSerializer
@@ -63,6 +67,11 @@ class RegistroView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+
+        # Sesión de Django (ver el bloque largo en LoginView.post).
+        from django.contrib.auth import login
+        login(request, user)
+
         # Tokens ya incluidos en to_representation del serializer
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -72,6 +81,42 @@ class LoginView(APIView):
     Login con username/email + password.
     Retorna access + refresh tokens con claims personalizados (rol, username, email).
     CUMPLE PAUTA: "Login JWT retornando tokens y claims de rol"
+
+    --------------------------------------------------------------------------
+    DOBLE SESIÓN: JWT (para la API) + SESIÓN DE DJANGO (para el HTML)
+    --------------------------------------------------------------------------
+    BUG CORREGIDO: antes esta vista sólo devolvía los tokens. El JS los guardaba
+    en localStorage y la API respondía perfecto... pero el NAVEGADOR seguía
+    "deslogueado" a los ojos de Django, porque `request.user` de una petición
+    HTML sale de la sesión y no del token.
+
+    Consecuencia: toda plantilla condicionaba con `{% if user.is_authenticated %}`
+    y pintaba siempre la rama del visitante anónimo. En el catálogo, la columna
+    de acciones dejaba ver "Login" en lugar del botón "Agregar", así que era
+    IMPOSIBLE añadir cursos al carro desde la web (aunque la API funcionaba).
+
+    La solución es tener AMBOS mecanismos, cada uno con su responsabilidad:
+
+      ┌──────────────────────┬────────────────────────────────────────────┐
+      │ MECANISMO            │ PARA QUÉ SIRVE                            │
+      ├──────────────────────┼────────────────────────────────────────────┤
+      │ Sesión de Django     │ Sólo para pintar HTML: navbar, botones,    │
+      │ (cookie de sesión)   │ {% if user.is_authenticated %} y           │
+      │                      │ user.es_estudiante                        │
+      ├──────────────────────┼────────────────────────────────────────────┤
+      │ Bearer <access>      │ Toda la API: los ViewSets NO usan la       │
+      │ (localStorage)       │ sesión, sólo JWTAuthentication, que lee    │
+      │                      │ el claim user_id y aplica el RBAC         │
+      └──────────────────────┴────────────────────────────────────────────┘
+
+    Por eso NO está `SessionAuthentication` en
+    `settings.REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES']`: si estuviera,
+    la API se autenticaría con la cookie y saltaría el token. Así, tener la
+    sesión abierta NO otorga ningún privilegio extra en la API: sin el Bearer
+    cualquier endpoint protegido devuelve 401.
+
+    `django.contrib.auth.login()` también firma la cookie con la SECRET_KEY y
+    regenera el `session_key`, lo que previene fijación de sesión.
     """
     permission_classes = [permissions.AllowAny]
     serializer_class = LoginSerializer
@@ -79,6 +124,12 @@ class LoginView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        # Crear la sesión de Django para que las plantillas HTML sepan quién
+        # entró (navbar + botón "Agregar al carro" del catálogo y del home).
+        from django.contrib.auth import login
+        login(request, serializer.validated_data['user'])
+
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -128,10 +179,26 @@ class LogoutView(APIView):
     Logout real: añade refresh token a blacklist.
     Requiere: 'rest_framework_simplejwt.token_blacklist' en INSTALLED_APPS
     y migración ejecutada.
+
+    --------------------------------------------------------------------------
+    HACE LAS DOS COSAS (misma lógica que LoginView, en el sentido inverso):
+      1. `django.contrib.auth.logout()` -> cierra la SESIÓN DE DJANGO, para
+         que la página vuelva a mostrar la navbar del visitante anónimo.
+      2. `token.blacklist()`           -> revoca el REFRESH TOKEN, de modo
+         que el par deje de servir aunque alguien lo tenga copiado.
+    Se hace primero el paso 1 porque está pensado para que el usuario ELIJA
+    cerrar sesión: aunque el refresh venga inválido o repetido, la petición
+    de "cerrar sesión" se honra (idempotente). Si sólo se blacklisteara el
+    token, el navegador seguiría pintándose como logueado.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
+        # 1) Cerrar la sesión de Django (borra la cookie de sesión del navegador)
+        from django.contrib.auth import logout
+        logout(request)
+
+        # 2) Revocar el refresh token en la blacklist
         refresh_token = request.data.get('refresh')
         if not refresh_token:
             return Response({'detail': 'Refresh token requerido.'}, status=status.HTTP_400_BAD_REQUEST)

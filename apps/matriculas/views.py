@@ -93,9 +93,27 @@ class CarroMatriculaViewSet(viewsets.GenericViewSet):
             item = carro.agregar_curso(curso)
         except ValueError as e:
             return Response({'detail': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         item_serializer = ItemCarroSerializer(item, context={'request': request})
-        return Response(item_serializer.data, status=status.HTTP_201_CREATED)
+
+        # BUG CORREGIDO: antes se devolvía sólo el ítem recién creado, pero el
+        # front (home.html y catalogo.html) actualiza el contador de la navbar
+        # leyendo `response.carro.total_items`. Como `carro` no existía:
+        #   * en catalogo.html salía `undefined || 0` -> el contador quedaba en 0
+        #   * en home.html  (`response.carro.total_items` sin `?.`) lanzaba
+        #     TypeError y se cortaba el success handler, con lo que el botón
+        #     quedaba deshabilitado para siempre en "Agregando..."
+        # Se responde con el carro COMPLETO (misma forma que GET /api/carro/) y
+        # además el ítem afectado, para que el cliente tenga ambos en un viaje.
+        carro_serializer = CarroMatriculaSerializer(carro, context={'request': request})
+        return Response(
+            {
+                'mensaje': 'Curso agregado al carro.',
+                'item': item_serializer.data,
+                'carro': carro_serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
 
     @action(detail=False, methods=['delete'], url_path='quitar/(?P<curso_id>[^/.]+)')
     def quitar(self, request, curso_id=None):

@@ -323,3 +323,52 @@ $.ajaxSetup({
     }
   }
 });
+// =========================================================================
+// 6. CIERRE DE SESIÓN (navbar)
+// =========================================================================
+// El botón #btnLogout envía un <form method="post"> a /logout/ (Django sólo
+// acepta POST ahí). Aquí se intercepta ese submit para hacer DOS cosas antes
+// de que la página se recargue:
+//
+//   1. Revocar el refresh token en la blacklist del backend
+//      -> POST /api/auth/logout/ con el Bearer + el refresh guardado.
+//   2. Borrar access_token y refresh_token de localStorage
+//      -> sin eso, los recursos JavaScript seguirían llamando a la API como
+//         si el usuario siguiera dentro, y el "cerrar sesión" sería un
+//         adorno visual sin efecto real.
+//
+// `HTMLFormElement.prototype.submit.call(form)` dispara el envío del
+// formulario SIN volver a pasar por este manejador (no re-lanza el evento
+// submit), así que no hay bucle infinito.
+$(document).on('submit', '#formLogout', function (event) {
+  event.preventDefault();
+
+  const form = this;
+  const access = localStorage.getItem('access_token');
+  const refresh = localStorage.getItem('refresh_token');
+
+  // Se borran primero: aunque la petición de revocación falle por cualquier
+  // motivo, el navegador ya no conserva credenciales del usuario.
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+
+  const enviarFormulario = function () {
+    HTMLFormElement.prototype.submit.call(form);
+  };
+
+  if (!refresh) {
+    enviarFormulario();
+    return;
+  }
+
+  fetch('/api/auth/logout/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + (access || '')
+    },
+    body: JSON.stringify({ refresh: refresh })
+  })
+    .catch(function () {})          // si falla, se ignora: lo importante es salir
+    .finally(enviarFormulario);    // y en cualquier caso se cierra la sesión
+});

@@ -33,6 +33,19 @@ Backend completo con **Django REST Framework** para la "Academia Felina Floppa" 
   - Público: GET /api/catalogo/cursos/, /api/catalogo/areas/
   - Estudiante (IsAuthenticated): Carro, Checkout, Mis Órdenes
   - Coordinador (IsAdminUser/Custom): CRUD Cursos, Cambio estados órdenes
+- **Doble mecanismo de autenticación, con responsabilidades separadas:**
+
+  | Mecanismo | Uso |
+  |---|---|
+  | **Bearer `<access>`** (localStorage) | Único mecanismo que autentica la API. Sin él, todo endpoint protegido devuelve 401. |
+  | **Sesión de Django** (cookie) | **Sólo** para pintar HTML: navbar, `{% if user.is_authenticated %}` y `user.es_estudiante`. |
+
+  `SessionAuthentication` **no** está en `DEFAULT_AUTHENTICATION_CLASSES`: tener la
+  sesión abierta no otorga ningún privilegio en la API. La sesión existe porque las
+  plantillas no leen el token (no pueden) y, sin ella, el catálogo mostraba el botón
+  *"Login"* en lugar de *"Agregar al carro"* incluso con el usuario dentro.
+  Cerrar sesión hace las dos cosas: cierra la sesión (`/logout/`, POST) y pone el
+  refresh en la blacklist (`/api/auth/logout/`).
 
 ### ✅ Modelo de Datos con CHOICES
 - `Usuario.rol` - CHOICES explícito (ESTUDIANTE/COORDINADOR)
