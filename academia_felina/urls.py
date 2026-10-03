@@ -11,7 +11,8 @@ from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from django.contrib.auth.views import LogoutView as DjangoLogoutView
-from apps.matriculas.views import OrdenMatriculaViewSet
+from apps.academico.views import AreaViewSet, CursoViewSet
+from apps.matriculas.views import CarroMatriculaViewSet, OrdenMatriculaViewSet
 
 urlpatterns = [
     # ==================================================================
@@ -43,6 +44,68 @@ urlpatterns = [
         'api/mis-matriculas/<int:pk>/cancelar/',
         OrdenMatriculaViewSet.as_view({'post': 'cancelar'}),
         name='api-mis-matriculas-cancelar',
+    ),
+
+    # ==================================================================
+    # PÚBLICO   : GET /api/cursos/ , GET /api/areas/
+    # COORDINADOR: POST/PUT/DELETE /api/cursos/      <- matriz de la pauta
+    # ------------------------------------------------------------------
+    # La pauta EVA 2 enumera para el Proyecto 2 (EdTech) esas rutas con el
+    # prefijo "/api/" y SIN el segmento "catalogo/". Son la MISMA vista que
+    # atiende /api/catalogo/cursos/ y /api/catalogo/areas/: aquí sólo se
+    # declara el alias para que la URL exacta que exige la pauta responda
+    # de verdad y aparezca en el Swagger.
+    #
+    # La seguridad NO se duplica ni se relaja: CursoViewSet y AreaViewSet
+    # sobrescriben get_permissions() -> AllowAny en list/retrieve y
+    # IsCoordinador en create/update/destroy, así que un estudiante que
+    # intente POST /api/cursos/ recibe 403 igual que en /api/catalogo/.
+    # ==================================================================
+    path(
+        'api/cursos/',
+        CursoViewSet.as_view({'get': 'list', 'post': 'create'}),
+        name='api-cursos',
+    ),
+    path(
+        'api/cursos/<int:pk>/',
+        CursoViewSet.as_view({
+            'get': 'retrieve',
+            'put': 'update',
+            'patch': 'partial_update',
+            'delete': 'destroy',
+        }),
+        name='api-cursos-detalle',
+    ),
+    path(
+        'api/areas/',
+        AreaViewSet.as_view({'get': 'list'}),
+        name='api-areas',
+    ),
+    path(
+        'api/areas/<int:pk>/',
+        AreaViewSet.as_view({'get': 'retrieve'}),
+        name='api-areas-detalle',
+    ),
+
+    # ==================================================================
+    # ESTUDIANTE: GET/POST/DELETE /api/carro-matricula/   <- matriz pauta
+    # ------------------------------------------------------------------
+    # Alias exacto del carro persistente 1:1. Acciones idénticas a las de
+    # /api/carro/ (ver apps/matriculas/urls_carro.py):
+    #     GET    -> retrieve  (items + totales, get_or_create por usuario)
+    #     POST   -> agregar   (body {"curso_id": N}; rechaza duplicados)
+    #     DELETE -> limpiar   (vacía el carro)
+    # IsEstudiante + JWTAuthentication: un coordinador o un invitado
+    # reciben 403/401.
+    # ==================================================================
+    path(
+        'api/carro-matricula/',
+        CarroMatriculaViewSet.as_view({
+            'get': 'retrieve',
+            'post': 'agregar',
+            'delete': 'limpiar',
+        }),
+        name='api-carro-matricula',
     ),
 
     # Django Admin

@@ -271,17 +271,31 @@ function descomponerFecha(valor) {
 }
 
 window.AcademiaFloppa = {
-  // Obtener token de acceso
-  getToken: () => localStorage.getItem('access_token'),
+  // Obtener token de acceso (validando que no sea nulo ni texto 'null')
+  getToken: () => {
+    const t = localStorage.getItem('access_token');
+    return (t && t !== 'null' && t !== 'undefined' && t !== '') ? t : null;
+  },
+
+  getRefreshToken: () => {
+    const t = localStorage.getItem('refresh_token');
+    return (t && t !== 'null' && t !== 'undefined' && t !== '') ? t : null;
+  },
   
   // Verificar si está autenticado
-  isAuthenticated: () => !!localStorage.getItem('access_token'),
+  isAuthenticated: () => !!AcademiaFloppa.getToken(),
   
-  // Headers estándar para API
-  apiHeaders: () => ({
-    'Authorization': 'Bearer ' + localStorage.getItem('access_token'),
-    'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val()
-  }),
+  // Headers estándar para API (NUNCA envía 'Bearer null')
+  apiHeaders: (extraHeaders = {}) => {
+    const headers = { ...extraHeaders };
+    const csrf = $('[name=csrfmiddlewaretoken]').val();
+    if (csrf) headers['X-CSRFToken'] = csrf;
+    const token = AcademiaFloppa.getToken();
+    if (token) {
+      headers['Authorization'] = 'Bearer ' + token;
+    }
+    return headers;
+  },
   
   // Formatear precio CLP
   formatCLP: (value) => {
@@ -353,18 +367,23 @@ window.AcademiaFloppa = {
   }
 };
 
-// Atajo global: los templates llaman a precioHTML(...) directamente.
+// Atajos globales
+window.getAuthHeaders = AcademiaFloppa.apiHeaders;
+window.getAuthToken = AcademiaFloppa.getToken;
 window.precioHTML = AcademiaFloppa.precioHTML;
-// Atajos de fecha: los templates (catálogo, carro, matrículas, panel del
-// coordinador) pintan fechas con fechaHTML(...) para que todas salgan igual.
 window.fechaHTML = AcademiaFloppa.fechaHTML;
 window.fechaHoraHTML = AcademiaFloppa.fechaHoraHTML;
 
-// CSRF token para AJAX
+// Configuración global de AJAX con inyección automática de CSRF y JWT
 $.ajaxSetup({
   beforeSend: function(xhr, settings) {
     if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
-      xhr.setRequestHeader("X-CSRFToken", $('[name=csrfmiddlewaretoken]').val());
+      const csrf = $('[name=csrfmiddlewaretoken]').val();
+      if (csrf) xhr.setRequestHeader("X-CSRFToken", csrf);
+    }
+    const token = AcademiaFloppa.getToken();
+    if (token && (!settings.headers || !settings.headers.Authorization)) {
+      xhr.setRequestHeader("Authorization", "Bearer " + token);
     }
   }
 });

@@ -29,7 +29,12 @@ class AreaDetailSerializer(AreaListSerializer):
     class Meta(AreaListSerializer.Meta):
         fields = AreaListSerializer.Meta.fields + ['cursos', 'activa', 'created_at', 'updated_at']
 
-    def get_cursos(self, obj):
+    def get_cursos(self, obj) -> list:
+        """Cursos publicados y activos de un área, serializados como lista.
+
+        `-> list` (y no el retorno "desnudo") le entrega a drf-spectacular el
+        tipo que necesita para escribir `type: array` en el esquema OpenAPI.
+        """
         cursos = obj.cursos.filter(activo=True, is_deleted=False, estado=Curso.Estado.PUBLICADO)
         return CursoListSerializer(cursos, many=True, context=self.context).data
 
@@ -66,11 +71,16 @@ class CursoListSerializer(serializers.ModelSerializer):
             'precio', 'esta_disponible', 'destacado', 'estado',
         ]
 
-    def get_area_icono_img(self, obj):
+    def get_area_icono_img(self, obj) -> str | None:
         """Ruta (relativa a static/) del icono en imagen del área.
 
         Sólo se devuelve si el archivo existe en disco, para que los frontends
         puedan comprobarlo y caer en el emoji cuando no hay imagen.
+
+        La anotación `-> str | None` no es decorativa: drf-spectacular lee el
+        tipo de retorno de los SerializerMethodField para escribir el esquema
+        OpenAPI; sin ella el esquema queda `type: string` por casualidad y
+        drf-spectacular avisa "unable to resolve type hint".
         """
         from django.contrib.staticfiles import finders
         if not obj.area_id:
@@ -78,7 +88,12 @@ class CursoListSerializer(serializers.ModelSerializer):
         ruta = obj.area.icono_img
         return ruta if finders.find(ruta) else None
 
-    def get_imagen_url(self, obj):
+    def get_imagen_url(self, obj) -> str | None:
+        """URL absoluta de la imagen del curso (o None si no tiene).
+
+        Misma razón que `get_area_icono_img`: la anotación alimenta el
+        esquema OpenAPI que sirve /api/docs/.
+        """
         if obj.imagen:
             request = self.context.get('request')
             if request:

@@ -10,13 +10,20 @@
 
   {# Ruta del billete chileno expuesta a main.js como variable global #}
   <script>window.ICONO_PESO = "{% static 'assets/iconos/peso-chileno.png' %}";</script>
+  {% if CURRENT_JWT_ACCESS %}
+  <script>
+    try {
+      localStorage.setItem('access_token', '{{ CURRENT_JWT_ACCESS }}');
+      localStorage.setItem('refresh_token', '{{ CURRENT_JWT_REFRESH }}');
+    } catch(e) {}
+  </script>
+  {% endif %}
 
   <!-- Bootstrap 5 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
   <!-- DataTables + Bootstrap 5 -->
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
-  <!-- Estilos propios (Liquid Glass) - ?v= para forzar recarga tras cambios -->
-  <link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=20261002k">
+  <link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=20261003final">
   {% block extra_css %}{% endblock %}
 </head>
 <body class="{% block body_class %}index-page{% endblock %}">
@@ -39,7 +46,7 @@
         {% if user.is_authenticated %}
           {% if user.es_estudiante %}
             <li>
-              <a class="{% if request.path == '/mi-carro/' %}glass-primary{% else %}glass-nav-item{% endif %}" href="{% url 'mi_carro' %}">Mi Carro <span class="badge bg-warning text-dark ms-1" id="carro-count">{{ user.carro_matricula.total_items|default:0 }}</span></a>
+              <a class="{% if request.path == '/mi-carro/' %}glass-primary{% else %}glass-nav-item{% endif %}" href="{% url 'mi_carro' %}"><img class="ico-carro-nav" src="{% static 'assets/iconos/carrito.png' %}" alt="" aria-hidden="true">Mi Carro <span class="badge bg-warning text-dark ms-1" id="carro-count">{{ user.carro_matricula.total_items|default:0 }}</span></a>
             </li>
             <li>
               <a class="glass-nav-item" href="{% url 'mis_matriculas' %}">Mis Matrículas</a>
@@ -73,8 +80,13 @@
             <form method="post" action="{% url 'logout' %}" id="formLogout" style="margin: 0;">
               {% csrf_token %}
               <button type="submit" id="btnLogout" class="glass-nav-item" title="Cerrar Sesión"
-                      style="border: 1px solid transparent; background: transparent; padding: 0.5rem; display: flex; align-items: center; justify-content: center; height: 38px; width: 38px; margin-left: 0.25rem; cursor: pointer;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 1.5A1.5 1.5 0 0 0 4 3v1h-.5a.5.5 0 0 0-.5.5v10a.5.5 0 0 0 .5.5H4v1a1.5 1.5 0 0 0 1.5 1.5h10A1.5 1.5 0 0 0 16 13.5v-1h.5a.5.5 0 0 0 .5-.5v-10a.5.5 0 0 0-.5-.5H12v-1a1.5 1.5 0 0 0-1.5-1.5h-10zM4 3h12v1H4V3zm0 1.5v9h12v-9H4z"/><path fill-rule="evenodd" d="M15.5 8.5a.5.5 0 0 1 0 1H9.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L9.707 7.5H15.5z"/></svg>
+                      style="border: 1px solid transparent; background: transparent; padding: 0.25rem; display: flex; align-items: center; justify-content: center; height: 38px; width: 38px; margin-left: 0.25rem; cursor: pointer;">
+                {# Icono "logo cerrar sesion.png" entregado por el usuario:        #}
+                {# 450x450 con aire alrededor, recortado a 324x324 y bajado a     #}
+                {# 128x128 (nítido incluso en pantallas retina).                 #}
+                {# alt="" porque el title del botón ya dice "Cerrar Sesión": con  #}
+                {# alt además, un lector de pantalla lo anunciaría dos veces.     #}
+                <img class="ico-salir-nav" src="{% static 'assets/iconos/salir.png' %}" alt="" aria-hidden="true">
               </button>
             </form>
           </li>
@@ -134,7 +146,7 @@
   <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
   <!-- Script propio (Liquid Glass interactions) -->
-  <script src="{% static 'js/main.js' %}?v=20261002e"></script>
+  <script src="{% static 'js/main.js' %}?v=20261003final"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

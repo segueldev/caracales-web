@@ -17,7 +17,9 @@ from apps.academico.serializers import (
     CursoListSerializer, CursoDetailSerializer, CursoCoordinadorSerializer
 )
 from apps.academico.filters import CursoFilter, AreaFilter
+from apps.academico.barcodes import es_codigo_valido, svg_codigo_barras
 from apps.core.permissions import PublicReadOnly, IsCoordinador
+from django.http import Http404, HttpResponse
 
 
 class AreaViewSet(viewsets.ModelViewSet):
@@ -126,3 +128,53 @@ class CursoViewSet(viewsets.ModelViewSet):
             'esta_disponible': curso.esta_disponible,
             'fecha_limite_inscripcion': curso.fecha_limite_inscripcion,
         })
+
+
+# ---------------------------------------------------------------------------
+# IMAGEN DE CÓDIGO DE BARRAS
+# ---------------------------------------------------------------------------
+# Es una vista de Django "a secas", NO una de DRF, y eso es deliberado:
+#
+#   * Devuelve image/svg+xml, no JSON: si se escribiera con @api_view, DRF la
+#     envolvería en el renderizador de la petición y habría que pelear con los
+#     formatos para que no devuelva texto entre medio.
+#   * Al no ser APIView, drf-spectacular NO la incluye en /api/docs/. El
+#     Swagger documenta recursos con contrato (JSON); meter ahí una imagen
+#     binaria sólo añade ruido a la documentación que revisa el profesor.
+#
+# Pública y cacheada: la información que transporta (el código del curso) ya
+# está a la vista en la propia tabla del catálogo, y se cachéa para que cada
+# redibujado del DataTable no tenga que regenerar el SVG.
+# ---------------------------------------------------------------------------
+def codigo_barras(request, codigo):
+    """
+    ``GET /api/catalogo/codigos/<codigo>.svg``
+
+    Devuelve el código de barras Code 39 del código de curso.
+
+    Respuestas:
+        200 -> image/svg+xml (SVG puro)
+        404 -> si el código está vacío, trae símbolos que Code 39 no conoce
+               (``Ñ``, acentos, emoji…) o no corresponde a ningún curso. Se
+               responde 404 y no 500: un código inexistente es un recurso que
+               no está, no un fallo del servidor.
+    """
+    codigo = (codigo or '').strip().upper()
+
+    if not es_codigo_valido(codigo):
+        raise Http404(f'{codigo!r} no es un código codificable como Code 39')
+
+    # Existe el curso: sin esto, cualquiera podría pedir imágenes arbitrarias
+    # escribiendo cualquier cadena válida en la URL, y además el 404 sería más
+    # honesto (no es que el formato esté mal, es que ese curso no existe).
+    if not Curso.objects.filter(codigo=codigo, is_deleted=False).exists():
+        raise Http404(f'No existe un curso con código {codigo!r}')
+
+    respuesta = HttpResponse(
+        svg_codigo_barras(codigo),
+        content_type='image/svg+xml; charset=utf-8',
+    )
+    # Los códigos no cambian nunca: 24 h en el navegador evita repetir la
+    # generación en cada visita y cada paginado del catálogo.
+    respuesta['Cache-Control'] = 'public, max-age=86400'
+    return respuesta

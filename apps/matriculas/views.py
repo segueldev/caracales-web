@@ -185,7 +185,21 @@ class OrdenMatriculaViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsEstudiante, IsOwnerOrCoordinador]
     
     def get_queryset(self):
-        return OrdenMatricula.objects.filter(estudiante=self.request.user).prefetch_related('matriculas__curso')
+        """
+        Órdenes del usuario del token.
+
+        El guard de `swagger_fake_view` / usuario anónimo no es decorativo:
+        al generar el esquema OpenAPI drf-spectacular recorre TODAS las vistas
+        con un request simulado y sin usuario autenticado, y aquí
+        `estudiante=AnonymousUser` revienta con "Field 'id' expected a number
+        but got AnonymousUser". Con el guard, el esquema se genera limpio y
+        ninguna vista depende de que haya sesión para poder describirse.
+        """
+        if getattr(self, 'swagger_fake_view', False) or not self.request.user.is_authenticated:
+            return OrdenMatricula.objects.none()
+        return OrdenMatricula.objects.filter(
+            estudiante=self.request.user
+        ).prefetch_related('matriculas__curso')
 
     def get_serializer_class(self):
         if self.action == 'retrieve':

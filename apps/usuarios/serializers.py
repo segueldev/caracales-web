@@ -192,3 +192,31 @@ class CambioPasswordSerializer(serializers.Serializer):
         user.set_password(self.validated_data['password_nuevo'])
         user.save()
         return user
+
+
+# ===========================================================================
+# SERIALIZERS DE LOGOUT
+# ---------------------------------------------------------------------------
+# ¿Por qué existen si LogoutView no hace `is_valid()` sobre ellos?
+# Porque drf-spectacular genera el esquema OpenAPI a partir de los
+# serializers de la vista; sin ellos la petición "unable to guess serializer"
+# y ELIMINABA /api/auth/logout/ del Swagger, dejando un endpoint real fuera
+# de la documentación.
+#
+# Se separan request/response porque no son simétricos: lo que se ENVÍA es el
+# refresh token a revocar y lo que se RECIBE es un simple mensaje de estado.
+# ===========================================================================
+class LogoutRequestSerializer(serializers.Serializer):
+    """Body de POST /api/auth/logout/: el refresh token que hay que blacklister."""
+    refresh = serializers.CharField(
+        required=True,
+        write_only=True,
+        help_text='Refresh token JWT a revocar (se añade a la blacklist).',
+    )
+
+
+class LogoutResponseSerializer(serializers.Serializer):
+    """Respuesta del logout: sólo un mensaje legible, nunca el token."""
+    detail = serializers.CharField(
+        help_text='Estado de la operación (200 OK o 400 si el token no sirve).'
+    )

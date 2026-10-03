@@ -125,8 +125,7 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
-  const token = localStorage.getItem('access_token');
-  const headers = { 'Authorization': 'Bearer ' + token };
+  const headers = getAuthHeaders();
   
   // Guardar perfil
   $('#formPerfil').on('submit', function(e) {

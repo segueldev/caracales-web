@@ -60,7 +60,7 @@
               <h5>Resumen</h5>
               <div class="d-flex justify-content-between mb-2">
                 <span>Subtotal</span>
-                <strong id="carro-subtotal">CLP 0<img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></strong>
+                <strong id="carro-subtotal">CLP 0 <img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></strong>
               </div>
               <div class="d-flex justify-content-between mb-2">
                 <span>Descuentos</span>
@@ -69,7 +69,7 @@
               <hr class="border-secondary">
               <div class="d-flex justify-content-between fs-5">
                 <span>Total</span>
-                <strong id="carro-total" class="text-success">CLP 0<img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></strong>
+                <strong id="carro-total" class="text-success">CLP 0 <img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></strong>
               </div>
               <small class="text-muted d-block mt-2">Los cupos se validan y descuentan al confirmar el pago.</small>
             </div>
@@ -110,20 +110,54 @@
     </div>
   </div>
 {% endif %}
+
+<!-- Modal de Éxito del Checkout -->
+<div class="modal fade" id="modalCheckoutSuccess" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content glass-dark">
+      <div class="modal-header border-0 justify-content-center">
+        <div class="display-1 text-success">✅</div>
+      </div>
+      <div class="modal-body text-center">
+        <h4 class="mb-3">¡Orden creada con éxito!</h4>
+        <p class="mb-2"><strong>Número:</strong> <code id="orden-numero" class="text-primary"></code></p>
+        <p class="mb-2"><strong>Estado:</strong> <span id="orden-estado" class="badge bg-warning text-dark"></span></p>
+        <p class="mb-2"><strong>Total:</strong> <span id="orden-total" class="text-success fw-bold"></span></p>
+        <p class="text-muted mt-3">Ahora puedes proceder al pago desde "Mis Matrículas".</p>
+      </div>
+      <div class="modal-footer border-0 justify-content-center">
+        <a href="{% url 'mis_matriculas' %}" class="btn btn-success px-4">Ir a Mis Matrículas</a>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
 $(document).ready(function() {
   const token = localStorage.getItem('access_token');
+
+  /* Iconos por modalidad. OJO: esto es JAVASCRIPT dentro de un template
+     literal (entre acentos graves), NO una expresión de Django. Antes esta
+     celda se construía con llaves dobles de plantilla + acceso por clave
+     dinámica + el operador "||" de JavaScript. Django procesa las llaves
+     dobles en TODA la página —también dentro de <script>— así que al
+     renderizar /mi-carro/ reventaba con:
+       TemplateSyntaxError: Could not parse the remainder: '...[curso.modalidad] || '
+     porque "||" y la clave dinámica no existen en el lenguaje de plantillas.
+     La tabla queda igual que en el catálogo. */
+  const ICONOS_MODALIDAD = {
+    'PRESENCIAL': '🏫',
+    'VIRTUAL': '💻',
+    'HIBRIDO': '🔄'
+  };
   
   function cargarCarro() {
-    if (!token) return;
-    
     $.ajax({
       url: '/api/carro/',
       method: 'GET',
-      headers: { 'Authorization': 'Bearer ' + token },
+      headers: getAuthHeaders(),
       success: function(data) {
         renderCarro(data);
       },
@@ -161,8 +195,9 @@ $(document).ready(function() {
             <strong>${item.nombre_congelado || curso.nombre}</strong>
             <br><small class="text-muted">${item.codigo_congelado || curso.codigo}</small>
           </td>
-          <td><span class="badge bg-secondary">${curso.area_icono || '🐾'} ${curso.area_nombre || ''}</span></td>
-          <td><span class="badge bg-info">${curso.modalidad || ''}</span></td>
+          <td><span class="af-area">${curso.area_icono || '🐾'} ${curso.area_nombre || ''}</span></td>
+          {# Mismo código de color por modalidad que el catálogo (.af-mod) #}
+          <td><span class="af-mod af-mod--${(curso.modalidad || '').toLowerCase()}">${ICONOS_MODALIDAD[curso.modalidad] || ''} ${curso.modalidad || ''}</span></td>
           <td>${fechaHTML(curso.fecha_inicio)}</td>
           <td class="text-end fw-bold">${precioHTML(item.precio_congelado || curso.precio)}</td>
           <td class="text-center">
@@ -192,7 +227,7 @@ $(document).ready(function() {
     $.ajax({
       url: `/api/carro/quitar/${cursoId}/`,
       method: 'DELETE',
-      headers: { 'Authorization': 'Bearer ' + token },
+      headers: getAuthHeaders(),
       success: function() {
         playSuccessSound();
         cargarCarro();
@@ -218,7 +253,7 @@ $(document).ready(function() {
     $.ajax({
       url: '/api/carro/checkout/',
       method: 'POST',
-      headers: { 'Authorization': 'Bearer ' + token },
+      headers: getAuthHeaders(),
       contentType: 'application/json',
       data: JSON.stringify({
         metodo_pago: $('#metodo_pago').val(),
@@ -226,8 +261,13 @@ $(document).ready(function() {
       }),
       success: function(orden) {
         playSuccessSound();
-        alert(`¡Orden creada! Número: ${orden.numero_orden}\nEstado: ${orden.get_estado_display}\nTotal: CLP ${parseFloat(orden.total).toLocaleString('es-CL')}\n\nAhora puedes proceder al pago desde "Mis Matrículas".`);
-        window.location.href = '/mis-matriculas/';
+        // Modal bonito en vez de alert
+        $('#orden-numero').text(orden.numero_orden);
+        $('#orden-estado').text(orden.get_estado_display);
+        $('#orden-total').text('CLP ' + parseFloat(orden.total).toLocaleString('es-CL'));
+        new bootstrap.Modal($('#modalCheckoutSuccess')).show();
+        // Limpiar el carro
+        cargarCarro();
       },
       error: function(xhr) {
         let msg = 'Error en checkout';

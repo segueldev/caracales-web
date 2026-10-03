@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}Catálogo de Cursos - {{ TEMATICA.nombre_sistema }}{% endblock %}
-{% block body_class %}index-page{% endblock %}
+{% block body_class %}index-page{% if user.es_coordinador %} es-coordinador{% endif %}{% endblock %}
 
 {% block content %}
 <!-- Banner -->
@@ -52,7 +52,11 @@
       </div>
       <div class="col-12">
         <div class="d-flex gap-2 flex-wrap">
-          <button type="submit" class="glass-primary px-4 py-2">Filtrar</button>
+          {# Botón de filtrar: icono de embudo a la izquierda y variante .glass-gris (gris) en vez del ámbar de .glass-primary #}
+          <button type="submit" class="glass-primary glass-gris px-4 py-2">
+            <svg class="ico-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+            Filtrar
+          </button>
           <button type="button" id="limpiar-filtros" class="btn-cancelar-floppa">Limpiar</button>
           <label class="form-check mt-2 ms-3">
             <input class="form-check-input" type="checkbox" id="solo_disponibles" name="disponible" value="true">
@@ -96,26 +100,102 @@ $(document).ready(function() {
   const tabla = $('#tablaCursos').DataTable({
     processing: true,
     serverSide: true,
-    ajax: {
-      url: '/api/catalogo/cursos/',
-      type: 'GET',
-      data: function(d) {
-        // Mapear parámetros de DataTable a django-filter
-        d.search = $('#search').val();
-        d.area = $('#area').val();
-        d.modalidad = $('#modalidad').val();
-        d.precio_min = $('#precio_min').val();
-        d.precio_max = $('#precio_max').val();
-        d.disponible = $('#solo_disponibles').is(':checked');
-        d.ordering = d.columns[d.order[0].column].data + (d.order[0].dir === 'desc' ? '' : '-');
-      },
-      dataSrc: function(json) {
-        // json puede ser paginado (DRF) o array directo
-        return json.results || json.data || json;
+    // autoWidth:false => DataTables NO fuerza el ancho de cada columna.
+    // Es imprescindible con la adaptación de columnas por media query
+    // (estilos.css): si DataTables calcula anchos con las 9 columnas y
+    // después CSS oculta algunas, el reparto queda descompensado y la
+    // tabla se estira de forma rara. Así el navegador reparte solo.
+    autoWidth: false,
+    // ---------------------------------------------------------------------
+    // CONEXIÓN CON EL API - forma FUNCIÓN (no objeto)
+    //
+    // BUG CORREGIDO: estaba en forma objeto con un `dataSrc` que sólo
+    // devolvía las filas. En modo serverSide: true, DataTables exige además
+    // recordsTotal y recordsFiltered en la RAÍZ de la respuesta, y el API de
+    // DRF devuelve {count, next, previous, results}. Al no encontrar esos dos
+    // números, la barra de información pintaba:
+    //
+    //     "Mostrando registros del 0 al 0 de un total de 0 registros
+    //      (filtrado de un total de NaN registros)"
+    //
+    // y la paginación inventaba páginas que no existían.
+    //
+    // La forma función recibe la petición ya armada por DataTables y devuelve
+    // exactamente la forma que espera. Como recordsTotal y recordsFiltered se
+    // rellenan con el MISMO `count`, DataTables entiende que no hay filtro
+    // pendiente de informar y omite la cláusula "filtrado de un total de X",
+    // que además habría quedado con un valor que el servidor no puede saber.
+    //
+    // `start`/`length` (de DataTables) se traducen a `page`/`page_size` (del
+    // API) para que el servidor entregue de verdad las filas 11 a 20 en vez
+    // de siempre las 20 primeras. Ver apps/core/paginators.py.
+    // ---------------------------------------------------------------------
+    ajax: function(datos, callback) {
+      // Mapeo de los controles de la página a los filtros de django-filter
+      const orden = datos.order && datos.order[0];
+      const columna = orden ? datos.columns[orden.column] : null;
+      const params = new URLSearchParams();
+
+      params.set('draw', datos.draw);
+      params.set('page', Math.floor((datos.start || 0) / (datos.length || 10)) + 1);
+      params.set('page_size', datos.length || 10);
+      params.set('search', $('#search').val() || '');
+      params.set('area', $('#area').val() || '');
+      params.set('modalidad', $('#modalidad').val() || '');
+      params.set('precio_min', $('#precio_min').val() || '');
+      params.set('precio_max', $('#precio_max').val() || '');
+      params.set('disponible', $('#solo_disponibles').is(':checked'));
+      if (columna && columna.data) {
+        params.set('ordering', columna.data + (orden.dir === 'desc' ? '' : '-'));
       }
+
+      fetch('/api/catalogo/cursos/?' + params.toString(), {
+        headers: { 'Accept': 'application/json' }
+      })
+        .then(function(respuesta) {
+          if (!respuesta.ok) throw new Error('HTTP ' + respuesta.status);
+          return respuesta.json();
+        })
+        .then(function(json) {
+          const filas = json.results || json.data || json;
+          const total = typeof json.count === 'number' ? json.count : filas.length;
+          callback({
+            draw: datos.draw,
+            recordsTotal: total,
+            recordsFiltered: total,
+            data: filas
+          });
+        })
+        .catch(function(error) {
+          // Ante un error se devuelve una tabla vacía en vez de dejar la
+          // interfaz girando eternamente en "Procesando...".
+          console.error('No se pudo cargar el catálogo:', error);
+          callback({ draw: datos.draw, recordsTotal: 0, recordsFiltered: 0, data: [] });
+        });
     },
     columns: [
-      { data: 'codigo' },
+      {
+        data: 'codigo',
+        render: function(data, type, row) {
+          // Cuando DataTables pide el valor para ORDENAR o FILTRAR hay que
+          // devolver el texto puro: si se devolviera el HTML, ordenar por
+          // código estaría ordenando por "<span...>" y quedaría siempre mal.
+          if (type !== 'display') return data;
+
+          // Código legible + código de barras debajo (Code 39, SVG generado
+          // por python-barcode). Ver apps/academico/barcodes.py.
+          // El ?v= es el mismo truco de cacheo que usan estilos.css y
+          // main.js: la respuesta se guarda 24 h (Cache-Control) y sin una
+          // versión nueva el navegador seguiría sirviendo el SVG anterior
+          // tras cambiar el generador. Tampoco se usa loading="lazy": son 8
+          // imágenes de ~5 KB que siempre están en pantalla y con lazy se
+          // quedaban en `complete: false` el primer render.
+          const url = `/api/catalogo/codigos/${encodeURIComponent(data)}.svg?v=20261002`;
+          return `<span class="af-codigo">${data}</span>` +
+                 `<img class="af-barcode" src="${url}"` +
+                 ` alt="Código de barras ${data}" width="64" height="21">`;
+        }
+      },
       { 
         data: 'nombre',
         render: function(data, type, row) {
@@ -125,14 +205,21 @@ $(document).ready(function() {
       { 
         data: null,
         render: function(data, type, row) {
-          return `<span class="badge bg-secondary">${row.area_icono || '🐾'} ${row.area_nombre || ''}</span>`;
+          // Píldora de área con la clase propia .af-area (ver estilos.css):
+          // antes era un .badge bg-secondary gris plano que no combinaba con
+          // el resto de la tabla.
+          return `<span class="af-area">${row.area_icono || '🐾'} ${row.area_nombre || ''}</span>`;
         }
       },
       { 
         data: 'modalidad',
         render: function(data) {
+          // Cada modalidad con su propio color (ver .af-mod en estilos.css):
+          // antes salían todas celestes con bg-info y la columna no aportaba
+          // nada más allá del texto.
           const icons = { PRESENCIAL: '🏫', VIRTUAL: '💻', HIBRIDO: '🔄' };
-          return `<span class="badge bg-info">${icons[data] || ''} ${data}</span>`;
+          const clase = (data || '').toLowerCase();
+          return `<span class="af-mod af-mod--${clase}">${icons[data] || ''} ${data}</span>`;
         }
       },
       { 
@@ -192,7 +279,10 @@ $(document).ready(function() {
           if (auth && esEstudiante && disponible) {
             return `<button class="btn btn-sm btn-primary btn-agregar-carro" data-curso-id="${row.id}">Agregar</button>`;
           } else if (auth && esEstudiante && !disponible) {
-            return `<span class="badge bg-danger">Agotado</span>`;
+            // Píldora .af-agotado (ver estilos.css): sustituye al badge
+            // bg-danger de Bootstrap, que quedaba mucho más bajo que el
+            // botón "Agregar" y desalineaba la fila.
+            return `<span class="af-agotado">Agotado</span>`;
           } else {
             return `<a href="/login/?next=/catalogo/" class="btn btn-sm btn-outline-primary">Login</a>`;
           }
@@ -228,10 +318,7 @@ $(document).ready(function() {
     $.ajax({
       url: '/api/carro/agregar/',
       method: 'POST',
-      headers: {
-        'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
-        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-      },
+      headers: getAuthHeaders(),
       contentType: 'application/json',
       data: JSON.stringify({ curso_id: cursoId }),
       success: function(response) {

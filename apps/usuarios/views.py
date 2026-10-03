@@ -22,9 +22,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework_simplejwt.exceptions import TokenError
+from drf_spectacular.utils import extend_schema
 from apps.usuarios.serializers import (
     RegistroSerializer, LoginSerializer, RefreshSerializer,
-    UsuarioSerializer, CambioPasswordSerializer
+    UsuarioSerializer, CambioPasswordSerializer,
+    LogoutRequestSerializer, LogoutResponseSerializer
 )
 from apps.usuarios.tokens import CustomRefreshToken
 from apps.usuarios.models import Usuario
@@ -193,6 +195,24 @@ class LogoutView(APIView):
     """
     permission_classes = [permissions.IsAuthenticated]
 
+    # `@extend_schema` es lo que reintegra este endpoint al Swagger: sin un
+    # serializer que adivinar, drf-spectacular lo descartaba con
+    # "unable to guess serializer" y no aparecía en /api/docs/.
+    @extend_schema(
+        request=LogoutRequestSerializer,
+        responses={
+            200: LogoutResponseSerializer,
+            400: LogoutResponseSerializer,
+        },
+        summary='Cerrar sesión (blacklist del refresh token)',
+        description=(
+            'Cierra la sesión de Django del navegador Y revoca el refresh '
+            'token. El paso 1 se ejecuta antes de validar el token para que '
+            'cerrar sesión sea idempotente: aunque el refresh venga '
+            'inválido o repetido, el usuario queda deslogueado de la página.'
+        ),
+        tags=['Autenticación'],
+    )
     def post(self, request):
         # 1) Cerrar la sesión de Django (borra la cookie de sesión del navegador)
         from django.contrib.auth import logout

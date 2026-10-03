@@ -64,12 +64,17 @@ body {
    Hereda la altura del texto (1.05em) para quedar alineado igual en
    tarjetas grandes, en tablas y en los totales del carro. */
 .ico-peso {
-  height: 1.05em;
+  height: 1.15em;
   width: auto;
-  vertical-align: -0.18em;
-  margin-left: 0.3rem;
-  border-radius: 3px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  vertical-align: -0.15em;
+  margin-left: 0.35rem;
+  margin-right: 0;
+  display: inline-block;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  -webkit-text-fill-color: initial !important;
+  -webkit-background-clip: initial !important;
+  background-clip: initial !important;
 }
 
 /* Page-specific full-screen background images with dark overlays */
@@ -197,7 +202,17 @@ main {
   justify-content: flex-end;
   list-style: none;
   margin: 0;
-  padding: 0;
+  /* padding vertical OBLIGATORIO, no cosmético.
+     `overflow-x: auto` obliga a que `overflow-y` deje de ser `visible`
+     (regla CSS: si un eje no es visible, el otro se recalcula a auto), así
+     que esta lista recorta todo lo que sobresalga. Los enlaces suben
+     2px con `transform: translateY(-2px)` al pasar el mouse, y al estar
+     pegados al borde superior (holgura de 0px) el botón se cortaba justo
+     en ese momento. Los 6px de relleno son la camilla que absorbe esa
+     subida; la barra de desplazamiento horizontal sigue funcionando igual.
+     Nota: con `overflow-x: auto` el navegador podría querer mostrar una
+     barra vertical, por eso además se ocultan las barras más abajo. */
+  padding: 6px 0;
   gap: 0.25rem;
   align-items: center;
   min-width: 0;
@@ -388,6 +403,36 @@ main {
   transform: translateY(0) scale(0.97);
 }
 
+/* ------------------------------------------------------------------------
+   VARIANTE GRIS de .glass-primary
+   Se pidió que el botón "Filtrar" del catálogo dejara de ser naranja y
+   quedara gris (el naranja queda reservado para las acciones de compra:
+   "Agregar", "Matricularse", etc., así el color indica qué es accionable).
+
+   Va DESPUÉS de .glass-primary:hover para ganarle en especificidad
+   (ambas reglas valen 0,2,0 y gana la última): sin esto, al pasar el
+   mouse volvería el fondo ámbar original.
+   ------------------------------------------------------------------------ */
+.glass-gris {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: color-mix(in oklch, oklch(0.42 0.01 250) 92%, transparent);
+  box-shadow:
+    0 8px 24px -8px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.45);
+}
+
+.glass-gris:hover {
+  background: color-mix(in oklch, oklch(0.5 0.01 250) 94%, transparent);
+  filter: none;
+  box-shadow:
+    0 16px 34px -8px rgba(0, 0, 0, 0.65),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 0 rgba(255, 255, 255, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
 /* ---------- Banner Header ---------- */
 .banner-floppa {
   background: linear-gradient(rgba(15, 23, 42, 0.65), rgba(15, 23, 42, 0.65)), url('/static/assets/floppa.jpg') no-repeat center center;
@@ -534,13 +579,13 @@ main {
 .af-estado {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.34rem 0.75rem;
+  gap: 0.2rem;
+  padding: 0.25rem 0.45rem;
   border-radius: 9999px;
-  font-size: 0.74rem;
+  font-size: 0.68rem;
   font-weight: 700;
   line-height: 1;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
   color: #fff;
@@ -671,6 +716,339 @@ table.dataTable tbody td a:hover {
 .dataTables_wrapper .dataTables_length select:focus {
   border-color: var(--ring) !important;
   box-shadow: 0 0 0 2px color-mix(in oklch, var(--ring) 30%, transparent) !important;
+}
+
+/* ------------------------------------------------------------------------
+   CATÁLOGO ADAPTATIVO
+   Se revisó con el navegador a media anchura (una mitad para chatear) y la
+   tabla de 9 columnas se apretaba: "FLF-007" partía en dos renglones, la
+   fecha en tres ("16-" / "11-" / "2026") y el precio también.
+
+   Regla que se aplica aquí: o la celda se lee completa o la tabla se
+   desliza. Ninguna columna de código/fecha/precio/cantidad se parte; sólo
+   "Curso" (columna 2) puede envolver porque su resumen es párrafo largo.
+   Si aun así no cabe el ancho mínimo, aparece el scroll horizontal que ya
+   trae .table-responsive-wrapper, que es mucho más legible que aplastar
+   todo.
+   ------------------------------------------------------------------------ */
+/* ------------------------------------------------------------------------
+   CATÁLOGO: table-layout fixed para que NUNCA haya scroll horizontal
+   ------------------------------------------------------------------------
+   Con table-layout:auto la tabla crece según su contenido y si las 9
+   columnas no caben en el contenedor, aparece scroll horizontal.
+   Con table-layout:fixed la tabla ocupa SIEMPRE el 100% del contenedor
+   y las columnas tienen ancho porcentual fijo. Así Estado y Acciones
+   siempre son visibles sin importar el ancho de la ventana.
+   ------------------------------------------------------------------------ */
+#tablaCursos {
+  table-layout: fixed;
+  width: 100%;
+}
+#tablaCursos th:nth-child(1) { width: 10%; }  /* Código */
+#tablaCursos th:nth-child(2) { width: 12%; }  /* Curso */
+#tablaCursos th:nth-child(3) { width: 9%; }   /* Área */
+#tablaCursos th:nth-child(4) { width: 12%; }  /* Modalidad */
+#tablaCursos th:nth-child(5) { width: 9%; }   /* Inicio */
+#tablaCursos th:nth-child(6) { width: 15%; }  /* Precio */
+#tablaCursos th:nth-child(7) { width: 6%; }   /* Cupos */
+#tablaCursos th:nth-child(8) { width: 13%; }  /* Estado */
+#tablaCursos th:nth-child(9) { width: 14%; }  /* Acciones */
+
+/* Con table-layout:fixed, UNA regla básica basta:
+   - nowrap en todas las columnas cortas (fechas, precios, códigos)
+   - la columna Curso (2) puede envolverse porque tiene texto largo
+   Se QUITA overflow:hidden + text-overflow:ellipsis porque cortaban
+   "16-11-2026" y "CLP 129.990" con "…". */
+#tablaCursos th,
+#tablaCursos td:not(:nth-child(2)) {
+  white-space: nowrap;
+}
+#tablaCursos td:nth-child(2) {
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+/* ------------------------------------------------------------------------
+   CATÁLOGO EN VENTANAS ANGOSTAS - medido en pantalla real
+   -------------------------------------------------------
+   Con el navegador a media anchura (viewport 1055px) la tabla de 9 columnas
+   medía 1139px y su contenedor 959px: aparecía scroll horizontal y la
+   columna "Acciones" quedaba FUERA de pantalla, obligando a arrastrar la
+   barra inferior justo para poder agregar un curso al carro.
+
+   La solución es soltar columnas de menor valor SIGUIENDO EL ORDEN DE
+   PRIORIDAD, de modo que las que quedan (incluida Acciones) siempre caben:
+
+     ≤1199px  se oculta ESTADO     En el catálogo público siempre dice
+                                   "Publicado": es información repetida en
+                                   las 8 filas, la más prescindible.
+     ≤979px   se oculta CÓDIGO     Su detalle está en la ficha del curso.
+     ≤899px   se oculta ÁREA       Ya aparece en la página del curso.
+     ≤739px   MODALIDAD e INICIO   En móvil prima precio, cupo y botón.
+
+   Cada escalón además aprieta tipografía y relleno para que la suma de lo
+   que queda BAJE por debajo del ancho del contenedor y no haya scroll.
+
+   Los cortes no son números redondos de Bootstrap sino del cálculo:
+   con 8 columnas visibles y relleno de 0.5rem la tabla mide ~928px, y el
+   contenedor resta ~41px al viewport (paneles y márgenes), así que para
+   que "Acciones" quepa sin barra hace falta un viewport de ~969px ->
+   por eso el segundo escalón entra en 979px y no en el 991px típico.
+
+   Las cifras se verificaron en pantalla abriendo el catálogo con un
+   viewport de 1000px (más angosto que el que se usa para trabajar):
+   scroll horizontal = 0 y la columna Acciones completamente visible.
+
+   Se oculta con display:none y no borrando columnas de la configuración de
+   DataTables: el dato sigue llegando del API y el orden/filtrado siguen
+   funcionando igual.
+   ------------------------------------------------------------------------ */
+@media (max-width: 1199.98px) {
+  /* ------------------------------------------------------------------------
+     CATÁLOGO 9 COLUMNAS (ESTADO visible para todos)
+     ------------------------------------------------------------------------
+     Con table-layout:fixed la tabla ocupa el 100% del contenedor y las
+     columnas tienen ancho porcentual fijo. No hay scroll horizontal nunca.
+     ------------------------------------------------------------------------
+     Coordinador: a ≤1199px ocultamos ÁREA (col 3) porque Estado
+     es más crítico para su trabajo y las dos columnas tienen ancho similar.
+     ------------------------------------------------------------------------ */
+  body.es-coordinador #tablaCursos th:nth-child(3),
+  body.es-coordinador #tablaCursos td:nth-child(3) {
+    display: none;
+  }
+  #tablaCursos {
+    font-size: 0.86rem;
+  }
+  #tablaCursos th,
+  #tablaCursos td {
+    /* Padding reducido para que todo quepa cómodamente.
+       !important gana a "table.dataTable tbody td { padding: 0.75rem 1rem !important }". */
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+}
+
+@media (max-width: 979.98px) {
+  #tablaCursos th:nth-child(1),
+  #tablaCursos td:nth-child(1) {
+    display: none;
+  }
+  #tablaCursos {
+    font-size: 0.84rem;
+  }
+}
+
+@media (max-width: 899.98px) {
+  #tablaCursos th:nth-child(3),
+  #tablaCursos td:nth-child(3) {
+    display: none;
+  }
+  #tablaCursos {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 739.98px) {
+  #tablaCursos th:nth-child(4),
+  #tablaCursos td:nth-child(4),
+  #tablaCursos th:nth-child(5),
+  #tablaCursos td:nth-child(5) {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------------
+   CÓDIGO DE BARRAS (columna "Código" del catálogo)
+   Imagen SVG generada por python-barcode (Code 39) desde
+   /api/catalogo/codigos/<codigo>.svg. El texto del código queda arriba y las
+   barras debajo, como en una etiqueta de almacén.
+   ------------------------------------------------------------------------ */
+.af-codigo {
+  display: block;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.af-barcode {
+  display: block;
+  box-sizing: border-box;
+  width: 64px;
+  height: 34px;
+  margin-top: 4px;
+  padding: 3px;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+  /* Sin esto, los navegadores suavizan las barras finas y el código se ve
+     gris y poco nítido en pantallas de 1x. */
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Icono de carrito en el enlace "Mi Carro" del navbar.
+   Viene de "logo carrito de compras.png" (500x500 con aire alrededor): se
+   recortó con -trim y se bajó a 128x128, que a este tamaño es nítido incluso
+   en pantallas retina. `alt=""` porque el enlace ya dice "Mi Carro": con alt
+   duplicado un lector de pantalla anunciaría el carro dos veces. */
+.ico-carro-nav {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin-right: 0.3rem;
+  vertical-align: -0.16em;
+  object-fit: contain;
+  flex: none;
+}
+
+/* Icono de CERRAR SESIÓN en el navbar ("logo cerrar sesion.png"). Es un
+   círculo ya dibujado en la imagen, así que aquí sólo se da tamaño.
+   Mide 28px dentro del botón de 38px: el padding del botón bajó de 0.5rem
+   a 0.25rem para dejarle sitio, y como `.glass-nav-item` trae
+   `overflow: hidden`, lo que sobresalga caería dentro del padding, no se
+   recorta (el área de clip es la de padding-box, no la de content-box). */
+.ico-salir-nav {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  flex: none;
+}
+
+/* ------------------------------------------------------------------------
+   ESTADO "AGOTADO" (columna Acciones del catálogo)
+   Antes era un `badge bg-danger` de Bootstrap: con font-size .75em medía
+   ~10px de alto y quedaba mucho más bajo que el botón "Agregar" de al lado,
+   lo que desalineaba la fila y hacía que el estado pasara desapercibido.
+   Ahora es una píldora de ~32px, la misma altura que el botón, con icono y
+   degradado, para que la columna tenga un solo ritmo visual.
+   ------------------------------------------------------------------------ */
+.af-agotado {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  color: #fff;
+  white-space: nowrap;
+  background: linear-gradient(180deg, #ef5350, #b42424);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 4px 12px -8px rgba(0, 0, 0, 0.85);
+}
+
+.af-agotado::before {
+  content: '🚫';
+  font-size: 0.9em;
+  line-height: 1;
+}
+
+/* La barra inferior (info + paginación) respira mejor: hueco entre bloques
+   y altura de línea generosa para que el texto no quede pegado. */
+/* Bootstrap (.row) aplica margen negativo de media medianil (-12px) a cada
+   lado. Dentro del contenedor con overflow-x:auto eso NO se queda pegado:
+   genera ~14px de scroll horizontal fantasma en la barra inferior del
+   catálogo (aparecía y desaparecía sin motivo). Se anulan los dos tipos de
+   fila que usa el layout de DataTables (`.row` de la fila de búsqueda y
+   `.dt-row` de info/paginación); la separación interna la siguen dando los
+   rellenos de .col-*. */
+.dataTables_wrapper .row,
+.dataTables_wrapper .dt-row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.dataTables_wrapper .dt-row {
+  gap: 0.35rem 1.25rem;
+  align-items: center;
+}
+.dataTables_wrapper .dt-row > [class*='col-'] {
+  min-width: 0;
+}
+.dataTables_wrapper .dataTables_info {
+  line-height: 1.6;
+}
+
+/* ------------------------------------------------------------------------
+   BADGE DE ÁREA (columna "Área" del catálogo)
+   Antes era un `.badge bg-secondary` gris plano de Bootstrap, que chocaba
+   con el resto de la tabla. Ahora es una píldora de arena/crema con borde
+   claro y luz interior: entra en la paleta del caracal (--caracal-arena)
+   y se distingue de la píldora verde de Estado y de la cian de Modalidad.
+   ------------------------------------------------------------------------ */
+.af-area {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.72rem;
+  border-radius: 9999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #3b2410;
+  background: linear-gradient(180deg, #f6e6cd, #dfbc90);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 4px 12px -7px rgba(0, 0, 0, 0.7);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------------
+   BADGES DE MODALIDAD (columna "Modalidad" del catálogo y de Mi Carro)
+   Antes: PRESENCIAL, HÍBRIDO y VIRTUAL salían los tres celestes con
+   .badge bg-info de Bootstrap, así que la columna no informaba nada: había
+   que leer el texto para saber la modalidad.
+
+   Ahora cada modalidad tiene su propio color. Se eligió una familia FRÍA de
+   tres tonos claramente separados (azul / violeta / cian) porque evita
+   chocar con los otros semáforos que ya usa la tabla:
+
+       Verde  -> Estado (Publicado/…)      Rojo/verde -> Cupos
+       Arena  -> Área                       Rojo       -> Matrícula cerrada
+
+   Semántica: VIRTUAL = cian (digital), HÍBRIDO = violeta (mezcla de dos),
+   PRESENCIAL = azul (aula formal).
+   ------------------------------------------------------------------------ */
+.af-mod {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #fff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 4px 12px -8px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+}
+
+.af-mod--presencial {
+  background: linear-gradient(180deg, #5b8cf6, #2f5fd0);
+}
+
+.af-mod--hibrido {
+  background: linear-gradient(180deg, #a45cf0, #7731d4);
+}
+
+.af-mod--virtual {
+  background: linear-gradient(180deg, #35c2d8, #0d7f96);
+}
+
+/* Fallback: si alguna modalidad nueva no tiene color asignado, se cae a un
+   gris neutro legible en vez de quedar sin estilo. */
+.af-mod--otra {
+  background: linear-gradient(180deg, #8b93a1, #626a78);
 }
 
 /* Pagination buttons styling */

@@ -116,19 +116,128 @@
   border-radius: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
+/* ---------------------------------------------------------------------------
+   PIE DE FIGURA — estilo "pie de foto de prensa", no tarjeta genérica.
+   La versión anterior era una cajita redondeada con fondo translúcido y una
+   barra roja a la izquierda: es exactamente el molde que se ve hecho con IA
+   (misma pila de "card + border-left" en cualquier plantilla). Aquí va en su
+   lugar la estructura real de un pie de foto de diario:
+
+     filete grueso ────────────────────────────────  (border-top 3px)
+     FIGURA 1 ─────────────────────── EVIDENCIA A    (slug / línea de archivo)
+     ──────────────────────────────────────────────  (hairline)
+     texto de la descripción, JUSTIFICADO con guiones, como en imprenta
+     ──────────────────────────────────────────────  (hairline)
+     ARCHIVO · ACADEMIA FELINA FLOPPA                 (crédito, monoespaciada)
+
+   Sin fondo, sin radio, sin sombra: sólo reglas tipográficas. Rojo y blanco
+   sobre el panel #121214, que son los mismos tonos del titular.
+   --------------------------------------------------------------------------- */
 .manifiesto-figura figcaption {
-  margin-top: 0.75rem;
-  font-size: 0.86rem;
-  color: rgba(255, 255, 255, 0.6);
-  text-align: center;
-  font-style: italic;
+  display: block;
+  margin-top: 1rem;
+  padding-top: 0.62rem;
+  border-top: 3px solid rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.8);
+  text-align: left;
+}
+
+/* Slug de archivo: "■ REGISTRO FOTOGRÁFICO ——— EVIDENCIA".
+   El rótulo original era "Figura 1 / Evidencia A": numeración académica que
+   no comunicaba nada en una página que se lee como parte de una denuncia.
+   Ahora dice de qué se trata (una foto) y qué representa (evidencia), que
+   es lo que entiende cualquiera al leer el pie. */
+.manifiesto-figura figcaption .fig-slug {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: 'Alfa Slab One', Georgia, 'Times New Roman', serif;
+  font-size: 0.92rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.manifiesto-figura figcaption .fig-slug b {
+  font-weight: 400;
+  color: #ffffff;
+}
+/* Cuadro de rótulo al inicio: hace de viñeta y separa el rótulo de la
+   descripción sin necesidad de recurrir a la caja con barra lateral. */
+.manifiesto-figura figcaption .fig-slug b::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 0.55rem;
+  background: var(--rojo-denuncia);
+  vertical-align: 0.05em;
+}
+/* Filete que une los dos extremos del slug y crece con el ancho disponible */
+.manifiesto-figura figcaption .fig-raya {
+  flex: 1 1 auto;
+  height: 1px;
+  min-width: 1.5rem;
+  background: rgba(255, 255, 255, 0.4);
+}
+.manifiesto-figura figcaption .fig-etiqueta {
+  color: var(--rojo-denuncia);
+  white-space: nowrap;
+}
+
+/* Texto del pie. Justificado con guiones: es la composición de imprenta y
+   desaparece la "escalera" de bordes derechos que delata un bloque web
+   genérico. `hyphens: auto` funciona porque <html lang="es">. */
+.manifiesto-figura figcaption .fig-cuerpo {
+  margin: 0.55rem 0 0;
+  font-size: 1rem;
+  line-height: 1.72;
+  color: rgba(255, 255, 255, 0.78);
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
+/* Crédito / procedencia, en monoespaciada y versalitas espaciadas, separado
+   por un filete fino. Da el toque de despacho de noticias. */
+.manifiesto-figura figcaption .fig-credito {
+  display: block;
+  margin-top: 0.6rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-family: ui-monospace, 'DejaVu Sans Mono', 'Courier New', monospace;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* En pantallas angostas el slug se acorta y la justificación se rinde (con
+   menos ancho las palabras quedan demasiado separadas); el filete se
+   conserva para que la pieza siga leyéndose como pie de foto. */
+@media (max-width: 575.98px) {
+  .manifiesto-figura figcaption .fig-slug {
+    font-size: 0.82rem;
+    letter-spacing: 0.07em;
+    gap: 0.5rem;
+  }
+  .manifiesto-figura figcaption .fig-cuerpo {
+    font-size: 0.87rem;
+    text-align: left;
+  }
+  .manifiesto-figura figcaption .fig-credito {
+    font-size: 0.62rem;
+    letter-spacing: 0.12em;
+  }
 }
 
 /* Cuerpo del texto: tono institucional con el chiste intacto */
 .manifiesto-cuerpo {
   color: rgba(255, 255, 255, 0.88);
-  line-height: 1.85;
-  font-size: 1.02rem;
+  line-height: 1.9;
+  /* 1.02rem (≈16px) resultaba chico para un texto corrido de lectura larga;
+     se sube a 1.15rem (≈18px), que es el tamaño de cuerpo de imprenta. */
+  font-size: 1.15rem;
 }
 .manifiesto-cuerpo h2 {
   font-family: 'Bangers', 'Poppins', cursive;
@@ -199,9 +308,19 @@
   <figure class="manifiesto-figura">
     <img src="{% static 'assets/historia-esfinge.jpg' %}"
          alt="Caracales imponiéndose sobre gatos esfinge en una sala de estar">
+    {# Pie de foto de prensa: slug + descripción justificada + crédito (CSS "PIE DE FIGURA") #}
     <figcaption>
-      Figura 1. Evidencia A: la línea caracal, arriba; la línea esfinge, debajo.
-      Material incorporado al expediente de la denuncia.
+      <span class="fig-slug">
+        <b>Registro fotográfico</b>
+        <i class="fig-raya" aria-hidden="true"></i>
+        <span class="fig-etiqueta">Evidencia</span>
+      </span>
+      <p class="fig-cuerpo">
+        Fotografía de la academia: arriba los caracales de la línea original,
+        abajo los gatos esfinge de la copia de Ducommun Marcelo. Es la prueba
+        de quién estuvo primero.
+      </p>
+      <span class="fig-credito">Archivo · Academia Felina Floppa</span>
     </figcaption>
   </figure>
 

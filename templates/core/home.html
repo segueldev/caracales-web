@@ -1179,7 +1179,7 @@
           <!-- Precio y acción -->
           <div class="d-flex align-items-center justify-content-between pt-3 b-top-glass">
             {# Precio en formato chileno: punto de millar + billete (filtro `clp`) #}
-            <span class="fs-4 fw-bold gradient-text">CLP {{ curso.precio|clp }}<img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></span>
+            <span class="fs-4 fw-bold"><span class="gradient-text">CLP {{ curso.precio|clp }}</span> <img class="ico-peso" src="{% static 'assets/iconos/peso-chileno.png' %}" alt="CLP" title="Pesos chilenos"></span>
             {% if user.is_authenticated and user.es_estudiante %}
               <button class="btn-primary-floppa btn-agregar-carro px-3 py-2 small"
                       data-curso-id="{{ curso.id }}"
@@ -1257,7 +1257,13 @@
       <div class="mw-2xl mx-auto">
         <span class="category-badge mb-3">¿Listo para comenzar?</span>
         <h2 class="t-h2 fw-bold mb-3">
-          Únete a más de <span class="gradient-text" data-text="{{ stats.total_estudiantes|add:stats.total_estudiantes }}">{{ stats.total_estudiantes|add:stats.total_estudiantes }}</span> estudiantes felinos
+          {# Número real de estudiantes (misma variable que la tarjeta        #}
+          {# "Estudiantes Inscritos"). Antes estaba escrito                 #}
+          {# `total_estudiantes|add:total_estudiantes`, que SUMA el valor    #}
+          {# consigo mismo y mostraba el doble: con 4 estudiantes la         #}
+          {# tarjeta decía 4 y esta frase decía 8, una contradicción a       #}
+          {# simple vista. Ambas salen ahora de la misma consulta.           #}
+          Únete a más de <span class="gradient-text" data-text="{{ stats.total_estudiantes }}">{{ stats.total_estudiantes }}</span> estudiantes felinos
         </h2>
         <p class="txt-300 mb-4" style="font-size: 1.05rem;">
           Tu viaje hacia la maestría felina comienza aquí. Matrícula abierta, cupos limitados.
@@ -1298,7 +1304,7 @@
           <div class="mc-cargando">Cargando detalle…</div>
         </div>
         <div class="modal-footer justify-content-between" id="mc-pie" hidden>
-          <span class="fs-5 fw-bold gradient-text" id="mc-precio"></span>
+          <span class="fs-5 fw-bold text-white" id="mc-precio"></span>
           <div class="d-flex flex-wrap gap-2">
             <button type="button" class="btn-outline-floppa" data-bs-dismiss="modal">Cerrar</button>
             {% if user.is_authenticated %}
@@ -1394,10 +1400,7 @@ $(document).ready(function() {
     $.ajax({
       url: '/api/carro/agregar/',
       method: 'POST',
-      headers: {
-        'X-CSRFToken': $('[name=csrfmiddlewaretoken]').val(),
-        'Authorization': 'Bearer ' + localStorage.getItem('access_token')
-      },
+      headers: getAuthHeaders(),
       contentType: 'application/json',
       data: JSON.stringify({ curso_id: cursoId }),
       success: function(response) {

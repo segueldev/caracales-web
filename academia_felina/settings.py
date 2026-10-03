@@ -183,6 +183,7 @@ REST_FRAMEWORK = {
     # SIN esto, `request.user` sería AnonymousUser y todos los permisos fallarían.
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     # Permisos por defecto: AllowAny.
     # DECISIÓN DE DISEÑO IMPORTANTE: el permiso por defecto es abierto para que
@@ -204,7 +205,9 @@ REST_FRAMEWORK = {
     ],
     # Paginación: los listados devuelven {count, next, previous, results}
     # con 20 ítems por página, en vez de volcar toda la tabla.
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    # Se usa el paginador propio porque además acepta ?page_size=, lo que el
+    # catálogo necesita para pedir de a 10 filas (ver apps/core/paginators.py).
+    'DEFAULT_PAGINATION_CLASS': 'apps.core.paginators.PaginacionEstandar',
     'PAGE_SIZE': 20,
     # Esquema OpenAPI/Swagger con drf-spectacular (pauta: "Soporte de
     # Documentación API: Swagger / OpenAPI"). Genera /api/schema/ (JSON/YAML)
@@ -331,6 +334,22 @@ SPECTACULAR_SETTINGS = {
     },
     'LICENSE': {
         'name': 'Evaluación Académica EVA 2 - INACAP Temuco 2026',
+    },
+    # ---------------------------------------------------------------------------
+    # NOMBRADO DE ENUMS
+    # ---------------------------------------------------------------------------
+    # Los CHOICES del proyecto se llaman igual en varios modelos
+    # (`Curso.Estado`, `OrdenMatricula.Estado`, ambos usados en campos
+    # llamados "estado"). Sin este mapa, drf-spectacular no puede decidir a
+    # qué componente pertenece cada conjunto y genera nombres crípticos
+    # como `Estado793Enum` / `Estado5a1Enum`, que no se pueden defender en la
+    # defensa oral. Aquí cada CHOICES queda con un nombre único y estable:
+    # el esquema dice `EstadoCurso` y `EstadoOrden` y se distinguen al tocar.
+    'ENUM_NAME_OVERRIDES': {
+        'EstadoCurso': 'apps.academico.models.Curso.Estado',
+        'EstadoOrden': 'apps.matriculas.models.OrdenMatricula.Estado',
+        'ModalidadCurso': 'apps.academico.models.Curso.Modalidad',
+        'RolUsuario': 'apps.usuarios.models.Usuario.Rol',
     },
     'SECURITY': [{'Bearer': []}],
 }

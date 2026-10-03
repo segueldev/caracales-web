@@ -74,9 +74,19 @@ class AgregarAlCarroSerializer(serializers.Serializer):
 
 class OrdenMatriculaListSerializer(serializers.ModelSerializer):
     """Serializer ligero para listado de órdenes (historial estudiante)"""
-    total_cursos = serializers.IntegerField(source='matriculas.count', read_only=True)
+    # ANTES era `IntegerField(source='matriculas.count')`. Funcionaba en
+    # runtime, pero el esquema OpenAPI no sabe tipar `matriculas.count`
+    # (es un método, no un campo) y drf-spectacular avisaba "unable to
+    # resolve type hint for function _method". Como SerializerMethodField
+    # con anotación `-> int` el esquema queda `type: integer` y el aviso
+    # desaparece. El valor devuelto es idéntico: una consulta COUNT.
+    total_cursos = serializers.SerializerMethodField()
     puede_pagar = serializers.BooleanField(read_only=True)
     puede_cancelar = serializers.BooleanField(read_only=True)
+
+    def get_total_cursos(self, obj) -> int:
+        """Cantidad de cursos matriculados en la orden."""
+        return obj.matriculas.count()
 
     class Meta:
         model = OrdenMatricula

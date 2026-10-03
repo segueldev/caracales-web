@@ -18,9 +18,12 @@ db.sqlite3-journal
 # Media & Static (collected)
 staticfiles/
 # Subidas de media: se ignora todo SALVO las imágenes de demostración que usa
-# el catálogo, para que el proyecto funcione recién clonado.
+# el catálogo y los avatares de la demo, para que el proyecto funcione
+# recién clonado (sin esto, la foto de perfil del profesor no viajaría al
+# repositorio y en otro equipo se vería el avatar genérico).
 media/*
 !media/cursos/
+!media/avatars/
 
 # IDE / editor de código
 # .vscode/ se SUBE a propósito: trae launch.json, settings.json y tasks.json
